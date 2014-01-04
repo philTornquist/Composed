@@ -1,7 +1,9 @@
 function RunCompiler()
 {
     LOG(["Compiler Testing"]);
-    var call = function(conv, params) {
+    
+    
+    function call(conv, params) {
         try 
         {    var code_pointer = get_code_pointer(Data, conv, params);
         }
@@ -25,6 +27,8 @@ function RunCompiler()
         LOG([]);
         return res;
     }
+    
+    AddParserConversions();
     
     var CODE = 
         List_CPS +
@@ -59,4 +63,43 @@ function RunCompiler()
     
     
     LOG([]);
+}
+
+function AddParserConversions()
+{
+    Data.Generics["[A]Parser,[A],[B]Parser"] = function(params)
+    {
+        var code = (params[1] && params[1][3] === "SIGNAT") ? params[1] : params[0];
+        var data = (params[1] && params[1][3] === "SIGNAT") ? params[0] : params[1];
+        return [data, code[1], code[2], code[3]];
+    }
+    Data.Generics["[A],[A]Parser"] = function(params)
+    {
+        return params[0][0];
+    }
+    
+    Data.Generics["[A],[A]Next"] = function(params)
+    {
+        return params[0];
+    }
+    Data.Generics["[A]Next'Parser',[A]Parser"] = function(params)
+    {
+        var code = params[0];
+        return [code[0], code[1], code[2] + 1, code[3]];
+    }
+    
+    Data.Generics["[A],[A]Get"] = function(params)
+    {
+        return params[0];
+    }
+    Data.Generics["Character,[A]Parser"] = function(params)
+    {
+        var code = params[0];
+        return code[1][code[2]];
+    }
+    
+    Data.Generics["[A]Compare,Character,Character"] = function(params, answers)
+    {
+        return call_answer( params[0] < params[1] ? "less" : (params[0] == params[1] ? "equal" : "greater"), answers);
+    }
 }
