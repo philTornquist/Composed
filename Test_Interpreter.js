@@ -76,7 +76,7 @@ function Test_Interpeter()
     check(  10,                                   "Foldl'Sum',List'Number',Sum",                            [make_list([1,2,3,4], 'L'),0]);
     check(  make_list([[1,1],[2,2]], 'L'),        "Map'Vector2D',List'Number'",                             [make_list([1,2], 'L')]);
     check(  make_list([1,2], 'R'),                "Filter'IsLessThan5',List'Number'",                       [make_list(["Nothing",1,"Nothing",2,"Nothing"], 'L')]);
-    check(  10,                                   "Summation,List'Number'",                                 [make_list([1,2,3,4], 'L')]);
+    check(  55,                                   "Summation,List'Number'",                                 [make_list([1,2,3,4,5,6,7,8,9,10], 'L')]);
     check(  4,                                    "Count,List'Number'",                                     [make_list([1,2,3,4], 'L')]);
     check(  2.5,                                  "Average,List'Number'",                                   [make_list([1,2,3,4], 'L')]);
     check(  std([1,2,3,4]),                       "STD,List'Number'",                                       [make_list([1,2,3,4], 'L')]);
