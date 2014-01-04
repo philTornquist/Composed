@@ -1,4 +1,6 @@
-Composed
+Composed JavaScript Implementation
 ========
 
-A programming language for describing how data conversions
+An implementation of Composed in JavaScript.
+
+[Try it](http://philTornquist.github.io/Composed)
