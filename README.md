@@ -1,9 +1,12 @@
 Composed
 ========
 
-Composed is a general purpose programming language designed to give the compiler more information about the program it is compiling. This is achieved through a statically-typed and functional language where functions are replace with Data Conversions. Data Conversions are named and referenced by their input and output types. Types in Composed should reflect the interpretation of the data and not the representation.
+Composed is a general purpose programming language designed to give the compiler more information about the program it is compiling. This is achieved through a statically-typed and functional language where functions are replace with Data Conversions. Data Conversions are named and referenced by their input and output types. Types in Composed should reflect the interpretation of the data and not the representation. This gives the compiler more flexibility towards the actual representation and provides the programmer with more context. 
 
-This gives the compiler more flexibility towards the actual representation and provides the programmer with more contex
+Composed can become verbose but leads to code that is easy to maintain and extend. There are only a few specific instances where written code will need to be modified to add a new feature. New type definitons are expected frequently but are simple to create. Code can be organized in anyway the programmer thinks is best. 
+
+A major future goal of this language is a smart JIT compiler that can create the extemely fast native code due to the amount of information about the program available. The compiler could be able to choose the best data representation, within the programmers requirements, and remove all operations that are not required such as data structure creations where only some of the data is used.
+
 
 ###Data Conversions
 Data Conversions define how a type can be created from other types. Data Conversions come in 3 forms:
