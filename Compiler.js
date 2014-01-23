@@ -314,7 +314,12 @@ function ConstantConversion(constantStr) {
             this.type = "Nothing";
             this.bytecode = function() {
                 //return "Ask>Nothing" + "\n";
-                return "Push Nothing>\n";
+                if (this.containing) {
+                    return "Push Nothing>\n";
+                }
+                else {
+                    return "Return Nothing>\n";
+                }
             }
         }
         else if (constantStr[0] == '"') {

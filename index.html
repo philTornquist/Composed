@@ -24,7 +24,9 @@
     <script src="Interpreter.js"></script>
 
     <script src="Test_Interpreter.cps.js"></script>
-    <script src="Test_Interpreter.js"></script>
+ 
+    <script src="JSCompiler.js"></script>
+    <script src="Test_JSCompiler.js"></script>
 
     <script src="ComposedCompiler.cps.js"></script>
     <script src="Builder.js"></script>
@@ -33,8 +35,8 @@
     window.onload = function()
     {
         document.getElementById("code").value = List_CPS+Bool_CPS+String_CPS+CCompiler_CPS;
-        Test_Interpeter();
-        RunCompiler();
+        Test_JSCompiler();
+        //RunCompiler();
     }
 </script>
 
