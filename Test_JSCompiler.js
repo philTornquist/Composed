@@ -1,4 +1,3 @@
-
 function Conversion(call, args, expanded) 
 {
 	var funct = Data.JS[call];
@@ -81,7 +80,7 @@ function Test_JSCompiler()
     function check(result, conv, params, ans) {
     	//try
     	{
-    		params.push(ans ? ans : {});
+    		params.push(ans ? ans : new Answers());
         	var test = Conversion(conv, params);
 	        test = test ? test : "Nothing";
 	        if ("" + result === "" + test) LOG("Test Passed! " + result + " = " + conv + params);
