@@ -1,3 +1,7 @@
+function Answers() {
+       
+}
+
 function js_conversion(Data, ip) {
 
     for(var key in Data.Conversions) if (Data.Conversions[key] == ip) break;
@@ -17,7 +21,7 @@ function js_conversion(Data, ip) {
         var data = tmp[1];
         switch (ins) {
             case "Enter":
-                jsString += "answers.unshift({});";
+                jsString += "answers.unshift(new Answers());";
                 jsString += "params.unshift([]);";
                 entered = true;
                 enterCount++;
