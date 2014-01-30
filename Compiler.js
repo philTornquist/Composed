@@ -135,7 +135,7 @@ function parseElement(code) {
                     if (code.get() == ':') {
                         code.next();
                         code.clearWhite();
-                        bytecode = parseConversion(code, {"value":0}, {"value":types[0]}, {}).bytecode();
+                        bytecode = parseConversion(code, {"value":0}, {"value":types[0]}, {}, {}, {}).bytecode();
                     }
                     else {
                         bytecode = "Data Structure>1";
@@ -154,7 +154,7 @@ function parseElement(code) {
                         types,
                         [],
                         "Data Structure>" + types.length);
-                    break;
+                   break;
             }
 
             for (var i = 0; i < types.length; i++) {
@@ -162,19 +162,24 @@ function parseElement(code) {
                     [output], 
                     [],
                     "Return Data>" + i);
-/*
+
+                if (types.length == 1) continue;
+                
                 var injectArray = [types[i]];
                 injectArray.addInOrder(output);
 
-                var bytecode = "Enter>" + output;
-                for (var j = 0; j < types.length; j++)
-                    bytecode += "," + types[j];
+                var injectSig = output + "," + types.join(',');
+                if (injectSig == output + "," + injectArray.join(','))
+                    continue;
+
+                var bytecode = "Enter>" + injectSig;
+
                 bytecode += "\n";
                 for (var j = 0; j < types.length; j++)
                 {
                     if (j == i)
                     {
-                        bytecode += "Push Param>" + (injectArray[0] == types[i] ? 0 : 1) + "\n";
+                        bytecode += "Push Param>" + (injectArray[0] == types[j] ? 0 : 1) + "\n";
                     }
                     else
                     {
@@ -183,16 +188,16 @@ function parseElement(code) {
                         bytecode += "Call>" + types[j] + "," + output + "\n";
                     }
                 }
-                bytecode += "Call>" + output;
-                for (var j = 0; j < types.length; j++)
-                    bytecode += "," + types[j];
+                bytecode += "Call>" + injectSig;
+                
                 bytecode += "\n";
 
                 add(output,
                     injectArray,
                     [],
-                    bytecode);*/
+                    bytecode);
             }
+
             break;
         //  Case for Conversion
         case 'f':
@@ -268,10 +273,15 @@ function parseElement(code) {
                 varname_MAP_number[key] = i;
             }
 
+            var subconv_MAP_number = {"_COUNT":0};
+            var subconv_MAP_type = {};
+            var subConversions = parseSubConversions(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type);
+
             add(output, 
                 inputs, 
                 selectors, 
-                parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name).bytecode());
+                subConversions + 
+                parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type).bytecode());
             //  Remember to seperate selectors from input
             //    and log the selector type as a valid type
             break;
@@ -304,6 +314,19 @@ function VariableConversion(varNumber, type) {
         }
         else {
             return "Return Param>" + this.varNumber + "\n";
+        }
+    };
+}
+
+function SubConversion(subNumber, type) {
+    this.subNumber = subNumber;
+    this.type = type;
+    this.bytecode = function() {
+        if (this.containing) {
+            return "Push Sub>" + this.subNumber + "\n";
+        }
+        else {
+            return "Return Sub>" + this.subNumber + "\n";
         }
     };
 }
@@ -389,16 +412,22 @@ function InjectionConversion(value, injectInTo) {
     this.injectInTo.containing = this;
     
     this.bytecode = function() {
-        var bc = "Enter>" + "Inject" + "\n";;
-        bc += this.value.bytecode();
-        bc += this.injectInTo.bytecode();
-
-        var inputs = [];
-        inputs.addInOrder(this.injectInTo.type);
+        var inputs = [this.type];
         inputs.addInOrder(this.value.type);
+        var conversion = this.type + "," + inputs.join(",");
+        var bc = "Enter>" + conversion + "\n";
+        
+        if (inputs[0] == this.value.type) {
+          bc += this.value.bytecode();
+          bc += this.injectInTo.bytecode();
+        }
+        else {
+          bc += this.injectInTo.bytecode();
+          bc += this.value.bytecode();
+        }
         
 //        bc += "Inject>" + this.injectInTo.type + "," + inputs[0] + "," + inputs[1] + "\n";
-        bc += "Inject>" + this.injectInTo.type + "," + this.value.type + "\n";
+        bc += "Call>" + conversion + "\n";
         return bc;
     }
 }
@@ -450,7 +479,30 @@ function ContinuationConversion(output, input) {
     this.signature = this.output + "," + this.input.type;
 }
 
-function parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name) {
+function parseSubConversions(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type) {
+    code.clearWhite();
+    code.save();
+    
+    try {
+    var subname = parseLiteral(code);
+    } catch(e) { code.restore(); return ""; }
+    if (subconv_MAP_number[subname] !== undefined) { throw code.lineNumber + "Multiple subconversions definitions for " + subname + ". " + code.hereBack(); }
+    
+    subconv_MAP_number[subname] = subconv_MAP_number["_COUNT"]++;
+    code.clearWhite();
+    
+    if (code.get() !== ':') { code.restore(); delete subconv_MAP_number[subname]; return ""; }
+    code.next();
+    code.clearWhite();
+    
+    var bytecode = parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type);
+    subconv_MAP_type[subname] = bytecode.output;
+    
+    code.release();
+    return "SubConversion>" + subname + "\n" + bytecode.bytecode() + parseSubConversions(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type);
+}
+
+function parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type) {
 
     //  Inital conversion that can have more conversions applied to its result
     var initalConversion = undefined;
@@ -463,7 +515,7 @@ function parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_
             do {
                 code.next();
                 code.clearWhite();
-                var input = parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name);
+                var input = parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type);
                 inputs.addInOrder(input, function(a, b) { 
                     if (a.selector && b.selector) {
                         if (a.type == b.type)
@@ -492,7 +544,7 @@ function parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_
             initalConversion = new ActualConversion(parseConversionType(code, genericVar_MAP_name), inputs);
             code.clearWhite();
             if (code.get() == "{") {
-                initalConversion.answers = parseAnswers(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name);
+                initalConversion.answers = parseAnswers(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type);
                 code.clearWhite();
             }
             break;
@@ -514,14 +566,14 @@ function parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_
         case '(':
             code.next();
             code.clearWhite();
-            var value = parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name);
+            var value = parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type);
             code.clearWhite();
             if (code.get() != '-') throw code.lineNumber + ": Unexpected '" + code.get() + "'";
             code.next();
             if (code.get() != '>') throw code.lineNumber + ": Unexpected '" + code.get() + "'";
             code.next();
             code.clearWhite();
-            var injectInTo = parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name);
+            var injectInTo = parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type);
             code.clearWhite();
             if (code.get() != ')') throw code.lineNumber + ": Unexpected '" + code.get() + "'";
             code.next();
@@ -539,15 +591,25 @@ function parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_
             }
             
             //  [paramOrConstant] is a constant
-            else if (varname_MAP_number[paramOrConstant] === undefined) {
+            else if (varname_MAP_number[paramOrConstant] === undefined &&
+                     subconv_MAP_number[paramOrConstant] === undefined) {
                 initalConversion = new ConstantConversion(paramOrConstant);
             }
 
             //  [paramOrConstant] is a parameter
-            else {
+            else if (varname_MAP_number[paramOrConstant] !== undefined) {
                 initalConversion = new VariableConversion(
                     varname_MAP_number[paramOrConstant],
                     varname_MAP_type[paramOrConstant]);
+            }
+            
+            else if (subconv_MAP_number[paramOrConstant] !== undefined) {
+                initalConversion = new SubConversion(
+                    subconv_MAP_number[paramOrConstant],
+                    subconv_MAP_type[paramOrConstant]);
+            }
+            else {
+                throw "Cannot find thing";
             }
             break;
     }
@@ -561,7 +623,7 @@ function parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_
             new ActualConversion      (parseConversionType(code, genericVar_MAP_name), [initalConversion]);
         code.clearWhite();
         if (code.get() == "{") {
-            initalConversion.answers = parseAnswers(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name);
+            initalConversion.answers = parseAnswers(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type);
             code.clearWhite();
         }
     }
@@ -569,7 +631,7 @@ function parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_
     return initalConversion;
 }
 
-function parseAnswers(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name) {
+function parseAnswers(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type) {
     //  Doesn't parse inputs given by Ask; only inputs to the original function
     code.next();
     var case_MAP_conversion = {};
@@ -580,7 +642,7 @@ function parseAnswers(code, varname_MAP_number, varname_MAP_type, genericVar_MAP
         if (code.get() != ':') throw code.lineNumber + "Expected ':' after " + code.hereBack();
         code.next();
         code.clearWhite();
-        var conv = parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name);
+        var conv = parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type);
         case_MAP_conversion[caseName] = conv;
         code.clearWhite();
     } while (code.get() != "}");
