@@ -1,65 +1,12 @@
 
-function Conversion(call, args, expanded) 
-{
-	var funct = Data.JS[call];
 
-	if (funct === undefined)
-	{
-		if (inputs_of(call).length == 1 && inputs_of(call)[0] === "Nothing") 
-        {
-        	funct = function() { return "Nothing"; };
-        	Data.JS[call] = funct;
-        }
-	}
 
-	if (funct === undefined)
-	{
-		var ip = create_conversion(Data, call);
-		if (ip !== undefined)
-		{
-			funct = isFinite(ip) ? js_conversion(Data, ip) : ip;
-			Data.JS[call] = funct;
-		}
-	}
-
-	if (expanded) 
-		return funct;
-
-	if (funct === undefined && !expanded)
-	{
-		var newCall = output_of(call);
-        var selects = [];
-        var inputs = inputs_of(call);
-        for (var i = 0; i < inputs.length; i++)
-        {
-            if (Data.Selectors[inputs[i]])
-            {
-                var sel = args.splice(i, 1); 
-                selects.push(sel[0]);
-            }
-            else
-                newCall += "," + inputs[i];
-        }
-    
-        newCall += ":" + selects.join(",");
-        funct = Conversion(newCall, args, true);
-	}
-
-	if (funct === undefined)
-		throw "Conversion does not exist: " + call;
-
-	var res = funct.apply(this, args);
-	if (res === "Nothing" && args[args.length-1]["Nothing"])
-		res = args[args.length-1]["Nothing"]();
-	return res;
-}
 
 function Test_JSCompiler()
 {
 	var log_compiler = false;
     
     LOG(["TEST!!! JSCompiler"]);
-    
     
         var SAVED = log_compiler_conversions;
         log_compiler_conversions = log_compiler ? LOG : NLOG;
@@ -71,39 +18,6 @@ function Test_JSCompiler()
     	load_conversion(Data, conversions[0][i].name, conversions[0][i].bytecode);
     }
 
-    for(var key in Data.Conversions)
-    {
-    	Data.JS[key] = js_conversion(Data, Data.Conversions[key]);
-    }
-
-    var failed = 0;
-    var results = [];
-    function check(result, conv, params, ans) {
-    	//try
-    	{
-    		params.push(ans ? ans : {});
-        	var test = Conversion(conv, params);
-	        test = test ? test : "Nothing";
-	        if ("" + result === "" + test) LOG("Test Passed! " + result + " = " + conv + params);
-	        else { failed++;
-	            LOG("Error with test [" + conv + "] expected " + result + " but got " + test + ". Parameters: " + params);
-	        }
-        }
-        /*catch (e) 
-        {
-        	failed++;
-        	LOG("Caught Exception: " + e);
-        }*/
-    }
-    
-    function make_list(list, LorR) {
-        return LorR == 'L' ?
-            [         list.length == 1 ? "Nothing" : make_list(list.slice(1,list.length), LorR), list[0]] :
-            [list[0], list.length == 1 ? "Nothing" : make_list(list.slice(1,list.length), LorR)];
-    }
-    
-    function std(l){var m=0;for(var i=0;i<l.length;i++)m+=l[i];m/=i;var s=0;for(i=0;i<l.length;i++)s+=(l[i]-m)*(l[i]-m);return Math.sqrt(s/(l.length-1));}
-    
     LOG(["LOADED: Conversions"]);
     for (var key in Data.Conversions) LOG(key);
     LOG([]);
@@ -117,7 +31,28 @@ function Test_JSCompiler()
     LOG([]);
     
     link_conversions(Data);
+
+    var failed = 0;
+    var results = [];
+    function check(result, conv, params) {
+        
+        var funct = CALL(Data, conv);
+        var test = funct.apply(Data.JITed, params);
+        test = test ? test : "Nothing";
+        if ("" + result === "" + test) LOG("Test Passed! " + result + " = " + conv + params);
+        else { failed++;
+              LOG("Error with test [" + conv + "] expected " + result + " but got " + test + ". Parameters: " + params);
+        }
+    }
     
+    function make_list(list, LorR) {
+        return LorR == 'L' ?
+            [         list.length == 1 ? "Nothing" : make_list(list.slice(1,list.length), LorR), list[0]] :
+            [list[0], list.length == 1 ? "Nothing" : make_list(list.slice(1,list.length), LorR)];
+    }
+    
+    function std(l){var m=0;for(var i=0;i<l.length;i++)m+=l[i];m/=i;var n=[];for(i=0;i<l.length;i++)n.push((l[i]-m)*(l[i]-m));var s=0;for(i=0;i<n.length;i++)s+=n[i];return Math.sqrt(s/(l.length-1));}
+
     
     check(  23,                                   "X,Y",                                                    [3]);
     check(  [1,2],                                "Point2D,Number,Number,Type",                             [1,2,"Type-Selector"]);
@@ -131,7 +66,7 @@ function Test_JSCompiler()
     check(  5,                                    "Y,Point2D",                                              [["Nothing",5]]);
     check(  "Nothing",                            "X,Point2D",                                              [["Nothing",5]]);
     check(  [10,20],                              "Point2D,Number,Number,Point2D",                          [10,20,[1,2]]); 
-    check(  [5,"Nothing"],                        "List'Number',List'Number',Number",                       [5,"Nothing"]);
+    check(  ["Nothing",5],                        "List'Number',List'Number',Number",                       ["Nothing",5]);
     check(  ["Nothing",17],                       "List'Number',List'Number',Number,Number,X",              ["Nothing", 17, 12, [5]]);
     check(  make_list([1,2], 'L'),                "List'Number',Number,Number",                             [1,2]);
     check(  10,                                   "Foldr'Sum',List'Number',Sum",                            [make_list([1,2,3,4], 'L'),0]);
@@ -143,10 +78,9 @@ function Test_JSCompiler()
     check(  2.5,                                  "Average,List'Number'",                                   [make_list([1,2,3,4], 'L')]);
     check(  std([1,2,3,4]),                       "STD,List'Number'",                                       [make_list([1,2,3,4], 'L')]);
 
-
     function listTo(val) {var r=[];for(var i=0;i<val;i++)r.push(i);return r;}
 	check(  std(listTo(500)),                       "STD,List'Number'",                                       [make_list(listTo(500), 'L')]);
-		
+	
 
     LOG(failed !== 0 ? "Tests Failed " + failed : "Tests Complete!");
     LOG("\n");

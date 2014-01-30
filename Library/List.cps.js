@@ -5,10 +5,10 @@ var List_CPS = "\
 [A]Foldr from [B]List(l), [A](b):                                      \n\
 l > [A]Exists {                                                        \n\
    yes:                                                                \n\
-	[                                                                    \n\
-		[                                                                  \n\
-			l > [B]List,                                                     \n\
-			b                                                                \n\
+	[                                                                  \n\
+		[                                                              \n\
+			l > [B]List,                                               \n\
+			b                                                          \n\
        ] > [A]Foldr > [A],                                             \n\
        l > [B]                                                         \n\
    ] > [A]                                                             \n\

@@ -1,5 +1,6 @@
 var log_linker_restructure = NLOG;
 var log_missing = NLOG;
+var log_jitting = NLOG;
 
 function DataStore()
 {
@@ -9,9 +10,15 @@ function DataStore()
 	this.DataStructures   = {};     //  Contains all types that are Data Structures
     this.Selectors        = {};     //  Mapping of selelctor types to an array of possible selectors
     this.Specifics        = {};     //  Contains all types that are specific types
+    this.Asks             = {};     //  Contains all asks of each conversion
+    this.SubConversions   = {};     //  Contains array of subconversion names
+    this.Missing          = {};
 
     this.ToRun            = [];     //  Contains all conversions to be run
 	this.Text             = [];     //  Contains all compiled bytecode
+    
+    this.JIT              = function(){};
+    this.JITed            = {};     //  Contains the JIT compiled calls
 }
 
 //  Loads conversion into Linker
@@ -37,7 +44,10 @@ function load_conversion(Data, conversion, bytecode)
 	}
     //  Conversion is not generic
 	else 
+    {
 		Data.Conversions[conversion] = compile_conversion(Data, conversion, bytecode);
+        delete Data.Missing[conversion];
+    }
 }
 
 //  Links all loaded conversions
@@ -45,16 +55,24 @@ function link_conversions(Data)
 {
     //  False when nothing happened in one iteration of the while loop
 	var notDone = true;
-    var missing = [];
+    var missing = false;
 	while (notDone) {
 	    notDone = false;
-        missing = [];
+        missing = false;
         //  For all conversion calls
-     	for (var conversion in Data.Links)
+     	for (var conversion in Data.Missing)
     	{
-            //  If there is a conversion for the call then
-            //    the link is complete
-    		if (Data.Conversions[conversion]) continue;
+            if (!is_generic(conversion))
+            {
+                var funct = accepts_selector(Data, conversion);
+                if (funct)
+                {
+                    Data.Conversions[conversion] = funct;
+                    delete Data.Missing[conversion];
+                    notDone = true;
+                    continue;
+                }
+            }
 
             //  Otherwise try to match a generic conversion
     		var relocation = 0;
@@ -72,33 +90,104 @@ function link_conversions(Data)
                 if (Data.Generics[generic] instanceof Function)
                 {
                     Data.Conversions[conversion] = Data.Generics[generic];
+                    Data.Asks[conversion] = Data.Asks[generic];
                 }
                 //  Replace generic types in generic bytecode to build a real conversion
     			else
                 {
-    			    var bytecode = build_conversion(Data, conversion, Data.Generics[generic], relocation);
-    			    Data.Conversions[conversion] = compile_conversion(Data, conversion, bytecode);
+                    var funct = accepts_selector(Data, conversion);
+                    if (funct)
+                        Data.Conversions[conversion] = funct;
+                    else
+                    {
+                        var bytecode = build_conversion(Data, conversion, Data.Generics[generic], relocation);
+                        Data.Conversions[conversion] = compile_conversion(Data, conversion, bytecode);
+                    }
                 }
     			break;
     		}
-            if (!notDone)
-                missing.push(conversion);
+            if (relocation)
+                delete Data.Missing[conversion];
+            else
+                missing = true;
     	}
 	}
-    log_missing(["MISSING"]);
-    log_missing(missing.join('\n'));
-    log_missing([]);
+    
+    if (missing)
+    {
+        log_missing(["MISSING"]);
+        for(var conversion in Data.Missing)
+            log_missing(conversion);
+        log_missing([]);
+    }
+    else
+    {
+        log_jitting(["JITTING"]);
+        for (var conversion in Data.Conversions)
+        {
+            if (Data.JITed[Data.JIT(conversion)] !== undefined)
+                continue;
+            log_jitting(conversion);
+            Data.JITed[Data.JIT(conversion)] = Data.JIT(Data, conversion);
+        }
+        log_jitting([]);
+    }
 }
 
 //  Used for calling a conversion that has not been built yet
 function create_conversion(Data, conversion)
 {
     //  Add this call to all function calls (sort of)
-	if (!Data.Links[conversion]) Data.Links[conversion] = [];
-	Data.Links[conversion].push(-1);
+    if (Data.Conversions[conversion]) 
+        return Data.Conversions[conversion];
+        
+	Data.Missing[conversion] = true;
 
 	link_conversions(Data);
 	return Data.Conversions[conversion];
+}
+
+function accepts_selector(Data, conversion) {
+
+    if (conversion == "Point2D,Number,Number,Type")
+        var h = 10;
+    var inputs = inputs_of(conversion);
+	var output = output_of(conversion);
+	for (var j = 0; j < inputs.length; j++)
+	{
+	    if (Data.Selectors[inputs[j]])
+	    {
+	    	return function() {
+			    var selects = [];
+			    var newCall = output;
+
+			    var args = [];
+			    for (var i = 0; i < arguments.length; i++)
+			    	args.push(arguments[i]);
+
+			    for (var i = 0; i < inputs.length; i++)
+			    {
+			        if (Data.Selectors[inputs[i]])
+			        {
+			            var sel = args.splice(i, 1); 
+			            selects.push(sel[0]);
+			        }
+			        else
+			            newCall += "," + inputs[i];
+			    }
+
+			    newCall += ":" + selects.join(",");
+			    var funct = Data.JITed[Data.JIT(newCall)];
+                if (!funct) 
+                {
+                    create_conversion(Data, newCall);
+			        funct = Data.JITed[Data.JIT(newCall)];
+                }
+                return funct.apply(this, args);
+			}
+	    }
+	}
+	return undefined;
 }
 
 //  Returns a function that can be polled for relocation information
@@ -400,6 +489,7 @@ function compile_conversion(Data, conversion, bytecode)
     }
 
 	var start_pointer = Data.Text.length;
+    var ask_count = 0;
 	for (var i = 0; i < bytecode.length; i++)
 	{
 		var tmp = bytecode[i].split(">");
@@ -408,6 +498,7 @@ function compile_conversion(Data, conversion, bytecode)
 		switch(ins)
 		{
 			case "Enter":
+                if (Data.Conversions[data] === undefined) Data.Missing[data] = true;
 				if (!Data.Links[data]) Data.Links[data] = [];
 				Data.Links[data].push(Data.Text.length);
 				break;
@@ -415,6 +506,16 @@ function compile_conversion(Data, conversion, bytecode)
                 var sel_type = selector_type(data);
                 if (!Data.Selectors[sel_type]) Data.Selectors[sel_type] = {};
                 Data.selectors[sel_type][selector_select(data)] = true;
+                break;
+            case "Return Ask":
+            case "Ask":
+                if (!Data.Asks[conversion]) Data.Asks[conversion] = {};
+                if (Data.Asks[conversion]["$"+data] === undefined)
+                    Data.Asks[conversion]["$"+data] = ask_count++;
+                break;
+            case "SubConversion":
+                if (!Data.SubConversions[conversion]) Data.SubConversions[conversion] = [];
+                Data.SubConversions[conversion].push(data);
                 break;
 		}
 		Data.Text.push(bytecode[i]); 	
@@ -425,6 +526,7 @@ function compile_conversion(Data, conversion, bytecode)
         if (bytecode[0].split(">")[1] == "1")
             Data.Specifics[output_of(conversion)] = true;
     }
+    
 	return start_pointer;
 }
 

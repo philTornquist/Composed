@@ -1,139 +1,238 @@
-function js_conversion(Data, ip) {
+var log_js_execution = NLOG;
+var log_js_compilation = log_jitting == NLOG ? NLOG: NLOG;
 
-    for(var key in Data.Conversions) if (Data.Conversions[key] == ip) break;
-    NLOG(["CONVERSION:" + key]);
+function js_conversion_rename(conversion) {
+    return conversion.replace(/'/g,"_").replace(/,/g,"$");
+}
 
-    var jsString = "var CV=\"" + key + "\";\nvar answers=[];var params=[];\n";
+function js_conversion(Data, call) {
+
+    if (call === undefined)
+        return js_conversion_rename(Data);
+
+    if (Data.Conversions[call] instanceof Function) 
+        return Data.Conversions[call];
+
+    var inputs = inputs_of(call);
+    var count = 1;
+    var args = [inputs[0].replace(/'/g,"_")+count];
+    for (var i = 1; i < inputs.length; i++)
+    {
+        if (inputs[i] == inputs[i-1])
+            count++;
+        else
+            count=1;
+        args.push(inputs[i].replace(/'/g,"_") + count);
+    }
+    
+    for (var ask in Data.Asks[call])
+        args.push(ask);
+
+    log_js_compilation(["JS Compile"]);
+    log_js_compilation(call);
+    log_js_compilation(["Bytecode"]);
+    var jsString = js_bytecode(Data, call, args, Data.Conversions[call]).jsString;
+    log_js_compilation([]);
+    
+    jsString = jsString.substring(0,jsString.length-1) + ';';
+    log_js_compilation(["JS"]);
+    log_js_compilation(jsString);
+    log_js_compilation([]);
+    log_js_compilation([]);
+
+    var funct = new Function(args.join(','), jsString);
+    if (log_js_execution == NLOG) return funct;
+    
+    return function() {
+        var args = [];
+        for (var i = 0; i < arguments.length; i++)
+            args.push(arguments[i]);
+        log_js_execution([call]);
+        log_js_execution("ARGUMENTS: " + args.toString());
+        var res = funct.apply(this, arguments);
+        log_js_execution(res.toString() + " = " + args.toString());
+        log_js_execution([]);
+        return res;
+    };
+}
+
+//  Returns {jsString, ip}
+function js_bytecode(Data, call, args, ip, tab, entered) {
+
+    var tab_size = '   ';
+    var jsString = "";
+    var subString = "";
+    var ansJS = [];
     var inAnswers = false;
-    var entered = false;
-    var enterCount = 0;
-    var inAnsSave = [];
+    if (tab !== undefined)
+        tab += tab_size;
+    else
+        tab = '';
+    
+    if (entered)
+    {
+        if (Data.Conversions[entered] === undefined)
+        {
+            create_conversion(Data, entered);
+            link_conversions(Data);
+        }
+        for (var key in Data.Asks[entered])
+            ansJS.push(tab + "function(){return\"Nothing\";}");
+    }
 
-    var return_arg_r = "if(r===\"Nothing\"){var ask=arguments[arguments.length-1][\"Nothing\"];r=ask?ask():r}return r;";
+    function ret() {
+        //var res = "function(){ var answers = {}; " + ansJS + jsString.substring(0,jsString.length-1) + " }(),";
+        if (entered === undefined)
+            jsString = subString + "return " + jsString;
+        return {"jsString": jsString, "ansJS":ansJS, "ip":ip};
+    }
 
-    for (; ip < Data.Text.length && (!entered || enterCount > 0 || inAnswers); ip++) {
+    for (; ip < Data.Text.length; ip++) {
         var tmp = Data.Text[ip].split(">");
         var ins = tmp[0];
         var data = tmp[1];
+        log_js_compilation(Data.Text[ip]);
         switch (ins) {
+            case "SubConversion":
+                var res = js_bytecode(Data, call, args, ip+1, tab);
+                subString += "var " + data + " = " + res.jsString.substring(7,res.jsString.length-1) + ";\n";
+                ip = res.ip;
+                break;
             case "Enter":
-                jsString += "answers.unshift({});";
-                jsString += "params.unshift([]);";
-                entered = true;
-                enterCount++;
+            
+                if (inputs_of(data).length == 1 &&
+                    (Data.DataStructures[output_of(data)] == data ||
+                     Data.DataStructures[inputs_of(data)[0]] == inputs_of(data)[0]+","+output_of(data)))
+                    {
+                        var nextIns = Data.Text[ip+1].split(">");
+                        if (nextIns[0] == "Enter")
+                        {
+                            var res = js_bytecode(Data, call, args, ip+1, tab.substring(tab_size.length, tab.length), nextIns[1]);
+                            ip = res.ip;
+                            //if (res.ansJS.length == 0)
+                                res.jsString = res.jsString.substring(0,res.jsString.length-2);
+                            if (entered !== undefined) jsString += tab;
+                            jsString += res.jsString + ',';//res.ansJS.join(",\n") + ',';
+                            if (entered === undefined) return ret();
+                            break;
+                        }
+                    }
+            
+                var res = js_bytecode(Data, call, args, ip+1, tab, data);
+                ip = res.ip;
+                if (res.ansJS.length == 0)
+                    res.jsString = res.jsString.substring(0,res.jsString.length-2);
+                //jsString += "function(){ \nvar answers = {};\n" + res.ansJS + " return CALL(\"" + data + "\")(\n" + res.jsString + "\n}(),";
+                if (entered !== undefined) jsString += tab;
+                //jsString += "CALL(\"" + data + "\")(\n" + res.jsString + res.ansJS.join(",\n") + "\n" + tab + "),";
+                jsString += "this." + js_conversion_rename(data) + "(\n" + res.jsString + res.ansJS.join(",\n") + "\n" + tab + "),";
+                if (entered === undefined) return ret();
                 break;
             case "Ask":
-                jsString += "var ask=arguments[arguments.length-1][\"" + data + "\"];params[0].push(ask?ask():\"Nothing\");";
+                //jsString += "(answers." + data + "? answers." + data + "():\"Nothing\")";
+                jsString += tab + "($" + data + " ? $" + data + ".apply(this):\"Nothing\") ";
                 break;
             case "Return Ask":
-                jsString += "var ask=arguments[arguments.length-1][\"" + data + "\"];var r=ask?ask():\"Nothing\";" + return_arg_r;
+                jsString += "($" + data + " ? $" + data + ".apply(this):\"Nothing\") ";
+                return ret();
                 break;
             case "Answer":
-                if (inAnswers) jsString += "};}(arguments);";
-                else inAnsSave.push(enterCount);
-                jsString += "answers[0][\"" + data + "\"]=function(args){return function(){var answers=[];var params=[];arguments=args;";
-                inAnswers = true;
-                enterCount = 0;
-                entered = false;
+                var res = js_bytecode(Data, call, args, ip+1, tab);
+                var ans = tab + "function(){//Answer: "+data + "\n" + tab + tab_size;
+                ans += res.jsString.substring(0,res.jsString.length-1);
+                ans += "\n" + tab + "}";
+                ip = res.ip;
+                
+                for (var key in Data.Asks[entered])
+                    if (key == "$"+data)
+                        ansJS[Data.Asks[entered][key]] = ans;
+                
                 break;
             case "End Answers":
-                jsString += "};}(arguments);";
-                inAnswers = false;
-                enterCount = inAnsSave.pop();
-                entered = enterCount != 0;
                 break;
             case "Push Param":
-                jsString += "params[0].push(arguments[" + parseInt(data) +"]);";
+                jsString += tab + args[parseInt(data)] + ",";
                 break;
             case "Return Param":
-                jsString += "return arguments[" + parseInt(data) + "];";
+                jsString += args[parseInt(data)] + ",";
+                return ret();
+                break;
+            case "Push Sub":
+                jsString += tab + Data.SubConversions[call][parseInt(data)] + ",";
+                break;
+            case "Return Sub":
+                jsString += Data.SubConversions[call][parseInt(data)] + ",";
+                return ret();
                 break;
             case "Data Structure":
                 if (data == "1")
                 {
-                    jsString += "return arguments[0];";
+                    jsString += tab + inputs_of(call)[0].replace(/'/g,"_") + "1;";
                 }
                 else
                 {
-                    jsString += "var r=[];for (var i=arguments.length-2;i>=0;i--){r.unshift(arguments[i]);if(arguments[i]!==\"Nothing\") {for(i--;i>=0;i--)r.unshift(arguments[i]); return r;}}return \"Nothing\"";
+                    //jsString += "function(){\nvar r=[];\nfor (var i=arguments.length-2;i>=0;i--){\nr.unshift(arguments[i]);\nif(arguments[i]!==\"Nothing\") {\nfor(i--;i>=0;i--)\nr.unshift(arguments[i]); \nreturn r;}}\nreturn \"Nothing\";\n}(),";
+                    jsString += tab + "function() {var r = \n";
+                    jsString += "[" + args[0].replace(/'/g,"_");
+                    for (var i = 1; i < args.length; i++)
+                        jsString += "," + args[i].replace(/'/g,"_");
+                    jsString += "];\n";
+                    
+                    jsString += tab+"for(var i=0;i<r.length;i++)\n";
+                    jsString += tab+tab_size+"if(r[i]!==\"Nothing\")\n";
+                    jsString += tab+tab_size+tab_size+"return r;\n";
+                    jsString += tab+"return \"Nothing\"}(),";
                 }
+                return ret();
                 break;
             case "Return Data":
                 //  If the conversions is a specification just return the data
-                var complete = false;
-                for (var conversion in Data.Conversions)
-                    if (Data.Conversions[conversion] == ip)
-                    {
-                        if (conversion == "Number,Bit" ||
-                            Data.Specifics[inputs_of(conversion)[0]])
-                        {
-                            jsString += "return arguments[0]";
-                            complete = true;
-                        }
-                    }
-                if (complete) break;
-
-                jsString += "var r=arguments[0][" + parseInt(data) + "];" + return_arg_r;
+                if (call == "Number,Bit" ||
+                    Data.Specifics[inputs_of(call)[0]])
+                {
+                   jsString += inputs_of(call)[0].replace(/'/g,"_") + "1;";
+                   return ret();
+                }
+                jsString += inputs_of(call)[0].replace(/'/g,"_") + "1==\"Nothing\"?\"Nothing\":" + inputs_of(call)[0].replace(/'/g,"_") + "1[" + data + "],";
+                return ret();
                 break;
             case "Call":
-                enterCount--;
-                jsString += "var a=params.shift();a.push(answers.shift());var r=Conversion.apply(this,[\""+data+"\",a]);";
-                if (enterCount == 0) jsString += "return r;";
-                else jsString += "params[0].push(r);";
-                break;
-            case "Inject":
-                enterCount--;
-                var def = Data.DataStructures[output_of(data)];
-                var inputs = inputs_of(def);
-                var ds = inputs[0] == output_of(data) ? 0 : 1;
-                var ij = ds == 0 ? 1 : 0;
-                for (var j = 0; j < inputs.length; j++) {
-                    if (inputs[j] == inputs_of(data)[0])
-                        break;
-                }
-                jsString += "var r = [];";
-                jsString += "\n";
-                jsString += "var a = params.shift(); a.push(answers.shift());";
-                jsString += "\n";
-                jsString += "if (a["+ds+"].length === undefined) r=a["+ij+"];";
-                jsString += "\n";
-                jsString += "else for(var i = a["+ds+"].length-1; i>=0; i--) {";
-                jsString += "\n";
-                jsString += "if (i == "+j+") r.unshift(a["+ij+"]);";
-                jsString += "\n";
-                jsString += "else r.unshift(a["+ds+"][i]);";
-                jsString += "\n";
-                jsString += "if (r[0] !== \"Nothing\") var cleared = true;";
-                jsString += "\n";
-                jsString += "} if (cleared === undefined) r = \"Nothing\";";
-                jsString += "\n";
-                
-                if (enterCount == 0) jsString += "return r;";
-                else jsString += "params[0].push(r);";
-
+                return ret();
                 break;
             case "Push Number":
-                jsString += "params[0].push(" + parseInt(data) + ");";
+                jsString += tab + data + ",";
                 break;
             case "Return Number":
-                jsString += "return " + data + ";";
+                jsString = data + ";";
+                return ret();
                 break;
             case "Push Nothing":
-                jsString += "params[0].push(\"Nothing\");";
+                jsString += tab + "\"Nothing\",";
                 break;
             case "Return Nothing":
-                jsString += "return \"Nothing\";";
+                jsString = "\"Nothing\";";
+                return ret();
                 break;
             case "Push Character":
-                jsString += "params[0].push(\"" + data + "\");";
+                jsString += tab + "\"" + data + "\",";
                 break;
         }
-        jsString += "\n";
+        if (ins !== "Answer" && ins !== "End Answers" && ins !== "SubConversion")
+            jsString += '\n';
     }
+}
 
-    NLOG(jsString);
-    NLOG([]);
-    var funct = new Function(jsString);
-    funct.name = key;
-    return funct;
+Data.JIT = js_conversion;
+function CALL(Data, call) 
+{
+	var funct = Data.JITed[Data.JIT(call)];
+    if (funct === undefined)
+    {
+      var ip = create_conversion(Data, call);
+      funct = Data.JITed[Data.JIT(call)];
+    }
+	if (funct === undefined)
+		throw "Conversion does not exist: " + call;
+
+	return funct;
 }

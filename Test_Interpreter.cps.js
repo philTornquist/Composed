@@ -11,12 +11,12 @@ List_CPS +
 '   [x, y] > Point2D',
 
 'X from Y(l):',
-' Nothing > X{Nothing:23}',
+' 23 > X',
+
 'Sum from Number(p), Number(h), Number(i), Number(l):', 
-'	[',
-'		[p, i] > Sum > Number,',
-'		[h, l] > Sum > Number',
-'	] > Sum',
+'	a:	[p, i] > Sum > Number',
+'	b:	[h, l] > Sum > Number',
+'	[a,b] > Sum',
 
 'X is Number',
 'Y is Number',
@@ -39,7 +39,7 @@ List_CPS +
 '	{test Number}',
 
 'Point2D from Number(l):',
-'	[l, [l,l,l] > Number{Nothing:23}] > Point2D',
+'	[l, [l,l,l] > Number > Exists\'Number\'{no:23} > Number] > Point2D',
 
 
 'Point2D from Number(l), Number(i), Number(k):',
