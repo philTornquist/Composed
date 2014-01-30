@@ -134,10 +134,10 @@ A selector, and the selector type, is defined when it is used either in a conver
 		
 The Composed runtime will select which conversion to call depending on the selector passed into the call. As in the conversion to get the damage from a player:
 
-	Player is Player-Stats, Attack
+	Player is Player-Stats, -Attack
 	Damage from Player(player):
 		[
-			player > Attack,
+			player > -Attack,
 			player > Player-Stats
 		] > Damage
 
@@ -155,3 +155,21 @@ Selectors can also be used to create an object heiarchy. Consider the following:
 		s > Rectangle > Area
 		
 Either Circle or Rectangle in the shape definition will have actual data which will be reflected by the value of ShapeType. Adding another shape to the heiarchy is slightly more complicated than an object oriented language but overall relatively simple. 
+
+###Conversion Body
+The body of a conversion consists of any number pre-conversion calls and a result conversion call. The syntax of a conversion call has two forms, single input and multi-input:
+
+    10 > Square > Number
+    [10, 20] > Point2D > Length
+    
+Multiple inputs must be contained inside '[ ]' and seperated by commas. A single input can have '[ ]' but it is not required. Following the inputs is one or more conversion operators.
+
+Before the result conversion call any number of pre-conversions can be defined:
+
+    partialResult: [2,2] > Sum > Number
+    
+"partialResult" is now a reference name that can be used in the following pre-conversions and the result converion. The result conversion is a just a standalone conversion and ends the conversion definition. A final example for cubing a number:
+
+    Cubed from Number(n):
+        squared: [n, n] > Product > Number
+        [squared, n] > Product > Number
