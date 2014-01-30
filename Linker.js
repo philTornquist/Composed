@@ -153,40 +153,37 @@ function accepts_selector(Data, conversion) {
         var h = 10;
     var inputs = inputs_of(conversion);
 	var output = output_of(conversion);
-	for (var j = 0; j < inputs.length; j++)
-	{
-	    if (Data.Selectors[inputs[j]])
-	    {
-	    	return function() {
-			    var selects = [];
-			    var newCall = output;
-
-			    var args = [];
-			    for (var i = 0; i < arguments.length; i++)
-			    	args.push(arguments[i]);
-
-			    for (var i = 0; i < inputs.length; i++)
-			    {
-			        if (Data.Selectors[inputs[i]])
-			        {
-			            var sel = args.splice(i, 1); 
-			            selects.push(sel[0]);
-			        }
-			        else
-			            newCall += "," + inputs[i];
-			    }
-
-			    newCall += ":" + selects.join(",");
-			    var funct = Data.JITed[Data.JIT(newCall)];
-                if (!funct) 
+    if (is_selector(inputs[0]))
+    {
+        return function() {
+            var selects = [];
+            var newCall = output;
+            
+            var args = [];
+            for (var i = 0; i < arguments.length; i++)
+                args.push(arguments[i]);
+            
+            for (var i = 0; i < inputs.length; i++)
+            {
+                if (is_selector(inputs[i]))
                 {
-                    create_conversion(Data, newCall);
-			        funct = Data.JITed[Data.JIT(newCall)];
+                    var sel = args.splice(i, 1); 
+                    selects.push(sel[0]);
                 }
-                return funct.apply(this, args);
-			}
-	    }
-	}
+                else
+                    newCall += "," + inputs[i];
+            }
+            
+            newCall += ":" + selects.join(",");
+            var funct = Data.JITed[Data.JIT(newCall)];
+            if (!funct) 
+            {
+                create_conversion(Data, newCall);
+                funct = Data.JITed[Data.JIT(newCall)];
+            }
+            return funct.apply(this, args);
+        }
+    }
 	return undefined;
 }
 
@@ -505,7 +502,7 @@ function compile_conversion(Data, conversion, bytecode)
             case "Push Selector":
                 var sel_type = selector_type(data);
                 if (!Data.Selectors[sel_type]) Data.Selectors[sel_type] = {};
-                Data.selectors[sel_type][selector_select(data)] = true;
+                Data.Selectors[sel_type][selector_select(data)] = true;
                 break;
             case "Return Ask":
             case "Ask":

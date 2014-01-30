@@ -370,10 +370,10 @@ function ConstantConversion(constantStr) {
 }
 
 function SelectorConversion(selector, type) {
-    this.type = type;
+    this.type = "-" + type;
     this.selector = selector;
     this.bytecode = function() {
-        return "Push Selector>" + this.type + "-" + this.selector + "\n";
+        return "Push Selector>" + this.type.substring(1) + "-" + this.selector + "\n";
     };
 }
 
@@ -517,7 +517,7 @@ function parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_
                 code.clearWhite();
                 var input = parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type);
                 inputs.addInOrder(input, function(a, b) { 
-                    if (a.selector && b.selector) {
+                    /*if (a.selector && b.selector) {
                         if (a.type == b.type)
                             return a.selector < b.selector;
                         else
@@ -531,7 +531,8 @@ function parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_
                     }
                     else {
                         return a.type < b.type; 
-                    }
+                    }*/
+                    return a.type < b.type; 
                 });
                 code.clearWhite();
             } while(code.get() == ',');
@@ -670,7 +671,17 @@ function parseConversionType(code, genericVar_MAP_name) {
     }
     try {
         type += parseType(code);
-    } catch(e) {if (type == "") throw e + code.hereBack();}
+    } catch(e) {
+        if (type == "") {
+            if (code.get() == '-') {
+                code.next();
+                return "-" + parseLiteral(code);
+            }
+            else {
+                throw e + code.hereBack();
+            }
+        }
+    }
     return type;
 }
 

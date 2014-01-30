@@ -16,9 +16,12 @@ function selectors_of(conversion)
     split = split[1].split(",");
     return split;
 }
+function is_selector(type) {
+    return type[0] == '-';
+}
 function selector_type(selector) 
 {
-    return selector.split("-")[0];
+    return "-" + selector.split("-")[0];
 }
 function selector_select(selector) 
 {

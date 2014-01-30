@@ -4,8 +4,11 @@ List_CPS +
 'test = Point2D,X,Y 1,2:',
 'test = Summation,List\'Number\' [[[Nothing,3],2],1]:',
 
-'Point2D from Number(x), Type(t):',
+'Point2D from Number(x), -Type(t):',
 '   [x, 20, t] > Point2D',
+
+'TestSelector is Point2D:',
+'   [value > X > Number, Selector-Type] > Point2D',
 
 'Point2D from Number(x), Number(y), Selector-Type:',
 '   [x, y] > Point2D',

@@ -2,7 +2,7 @@ var log_js_execution = NLOG;
 var log_js_compilation = log_jitting == NLOG ? NLOG: NLOG;
 
 function js_conversion_rename(conversion) {
-    return conversion.replace(/'/g,"_").replace(/,/g,"$");
+    return conversion.replace(/'/g,"_").replace(/,/g,"$").replace(/-/g,"_$_");
 }
 
 function js_conversion(Data, call) {
@@ -15,14 +15,14 @@ function js_conversion(Data, call) {
 
     var inputs = inputs_of(call);
     var count = 1;
-    var args = [inputs[0].replace(/'/g,"_")+count];
+    var args = [inputs[0].replace(/'/g,"_").replace(/-/g,"_$_")+count];
     for (var i = 1; i < inputs.length; i++)
     {
         if (inputs[i] == inputs[i-1])
             count++;
         else
             count=1;
-        args.push(inputs[i].replace(/'/g,"_") + count);
+        args.push(inputs[i].replace(/'/g,"_").replace(/-/g,"_$_") + count);
     }
     
     for (var ask in Data.Asks[call])
@@ -214,6 +214,9 @@ function js_bytecode(Data, call, args, ip, tab, entered) {
                 break;
             case "Push Character":
                 jsString += tab + "\"" + data + "\",";
+                break;
+            case "Push Selector":
+                jsString += '"' + data + '"' + ",";
                 break;
         }
         if (ins !== "Answer" && ins !== "End Answers" && ins !== "SubConversion")

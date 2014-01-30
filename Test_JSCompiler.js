@@ -95,9 +95,10 @@ function Test_JSCompiler()
 
     
     check(  23,                                   "X,Y",                                                    [3]);
-    check(  [1,2],                                "Point2D,Number,Number,Type",                             [1,2,"Type-Selector"]);
-    check(  [1,20],                               "Point2D,Number,Type",                                    [1,"Type-Selector"]);
+    check(  [1,2],                                "Point2D,-Type,Number,Number",                             ["Type-Selector",1,2]);
+    check(  [1,20],                               "Point2D,-Type,Number",                                    ["Type-Selector",1]);
     check(  [5,23],                               "Point2D,Number",                                         [5]);
+    check(  [12,20],                              "TestSelector,Point2D",                                   [[12,9]]);
     check(  26,                                   "Sum,Number,Number,Number,Number",                        [5,6,7,8]);
     check(  "Nothing",                            "Number,Number,Number,Number",                            [1,2,3]);
     check(  12,                                   "Number,Number,Number",                                   [5,6]);
