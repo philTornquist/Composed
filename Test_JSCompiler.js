@@ -5,10 +5,11 @@ function Conversion(call, args, expanded)
 	if (funct === undefined)
 	{
 		if (inputs_of(call).length == 1 && inputs_of(call)[0] === "Nothing") 
-        {
+        	{
         	funct = function() { return "Nothing"; };
         	Data.JS[call] = funct;
-        }
+        	}
+	}
 }
 
 
@@ -27,11 +28,6 @@ function Test_JSCompiler()
     Data.ToRun = conversions[1];
     for(var i = 0; i < conversions[0].length; i++) {
     	load_conversion(Data, conversions[0][i].name, conversions[0][i].bytecode);
-    }
-
-    for(var key in Data.Conversions)
-    {
-    	Data.JS[key] = js_conversion(Data, Data.Conversions[key]);
     }
 
     var failed = 0;
