@@ -1,5 +1,4 @@
 var TEST_CODE = 
-List_CPS +
 [
 'test = Point2D,X,Y 1,2:',
 'test = Summation,List\'Number\' [[[Nothing,3],2],1]:',

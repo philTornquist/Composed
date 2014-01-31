@@ -602,3 +602,51 @@ function print_conversions(Data)
         print_structure(build_structure(Data.Conversions[conversion]));
     }
 }
+
+function runInline()
+{
+    LOG(["INTERPRETING Inline"]);
+    function dataifyParamString(str)
+    {
+        str += ",";
+        var result = [];
+        var bracecount = 0;
+        var needs_more_work = false;
+        var last_substring = 0;
+        for(var i = 0; i < str.length; i++)
+        {
+            switch(str[i])
+            {
+                case '[':
+                    bracecount++;
+                    if (!needs_more_work) last_substring++;
+                    needs_more_work = true;
+                    break;
+                case ']':
+                    bracecount--;
+                    break;
+                case ',':
+                    if (bracecount !== 0) break;
+                    var substring = str.substring(last_substring, i);
+                    if (needs_more_work) result.push(dataifyParamString(substring.substring(0, substring.length-1)));
+                    else result.push( isFinite(substring) ? parseInt(substring) : substring);
+                    needs_more_work = false;
+                    last_substring = i+1;
+                    break;
+            }
+        }
+        return result;
+    }
+
+    for (var i = 0; i < Data.ToRun.length; i++)
+    {
+        var split = Data.ToRun[i].split("<");
+        var params = dataifyParamString(split[1]);
+
+        var funct = CALL(Data, split[0]);
+        var test = funct.apply(Data.JITed, params);
+        test = test ? test : "Nothing";
+        LOG(test + " = " + Data.ToRun[i]);
+    }
+    LOG([]);
+}

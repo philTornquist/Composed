@@ -224,7 +224,6 @@ function js_bytecode(Data, call, args, ip, tab, entered) {
     }
 }
 
-Data.JIT = js_conversion;
 function CALL(Data, call) 
 {
 	var funct = Data.JITed[Data.JIT(call)];

@@ -20,9 +20,12 @@ function Test_JSCompiler()
     
     LOG(["TEST!!! JSCompiler"]);
     
+    RESET();
+    Data.JIT = js_conversion;
+    
         var SAVED = log_compiler_conversions;
         log_compiler_conversions = log_compiler ? LOG : NLOG;
-    var conversions = parse(TEST_CODE);
+    var conversions = parse(TEST_CODE + List_CPS);
         log_compiler_conversions = SAVED;
     
     Data.ToRun = conversions[1];

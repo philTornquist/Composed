@@ -3,11 +3,62 @@
     <body>
         <textarea id="output" rows=50 cols=100>
 </textarea>
+        <button id="runButton" onclick="clickedRun()">Run</button>
 
     <div>
 
         <textarea id="code" rows=50 cols=100>
-        </textarea>
+Test1 = Point2D,X,Y 1,2:
+Test2 = Summation,List'Number' [[[Nothing,3],2],1]:
+
+
+X is Number
+Y is Number
+Point2D is X, Y
+
+IsLessThan5 is Number:
+   [value, 5] > Compare'Number' {
+       less: value
+   } > Number
+
+Summation is Sum
+Sum from Number(n), Sum(s):
+    [
+        n,
+        s > Number
+    ] > Sum
+Summation from List'Number'(l):
+   [
+       l,
+       [0,0] > Sum
+   ] > Foldl'Sum' > Sum > Summation
+
+Average is Number
+Average from Sum(s), Count(c):
+    [
+        s > Number,
+        c > Number
+    ] > Quotient > Number > Average
+
+Average from List'Number'(l):
+    [
+        l > Summation > Sum,
+        l > Count
+    ] > Average
+
+STD is Number
+STD from List'Number'(l):
+    [
+        [
+            l,
+            l > Average > Number
+        ] > Map'Difference' > Map'Number' > Map'Square' > Map'Number' > List'Number' > Summation > Sum > Number,
+        [
+            l > Count > Number,
+            1
+        ] > Difference > Number
+    ] > Quotient > Number > SquareRoot > Number > STD
+</textarea>
     </div>
     
     <script src="Library/List.cps.js"></script>
@@ -34,9 +85,36 @@
 <script>
     window.onload = function()
     {
-        document.getElementById("code").value = List_CPS+Bool_CPS+String_CPS+CCompiler_CPS;
+        document.getElementById("code").value += List_CPS;
         Test_JSCompiler();
         RunCompiler();
+    }
+    
+    function clickedRun()
+    {
+        var code = document.getElementById("code").value;
+        document.getElementById("output").value = "";
+        RESET();
+        Data.JIT = js_conversion;
+        var conversions = parse(code);
+        
+        Data.ToRun = conversions[1];
+        for(var i = 0; i < conversions[0].length; i++) {
+            load_conversion(Data, conversions[0][i].name, conversions[0][i].bytecode);
+        }
+        
+        link_conversions(Data);
+        
+        
+        var missingMsg = "";
+        for (var key in Data.Missing)
+            missingMsg += key + "\n";
+            
+          
+        if (missingMsg == "")
+            runInline();
+        else
+            alert("Missing the following conversions:\n" + missingMsg)
     }
 </script>
 
