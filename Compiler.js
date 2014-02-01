@@ -314,7 +314,7 @@ function parseElement(code) {
             var data = "";
             while (code.get() != ':') { data += code.get(); code.next(); }
             code.next();
-            impures.push(call.join(',') + "<" + data);
+            impures.push(output + "=" + call.join(',') + "<" + data);
     }
 
     return [conversions, impures];

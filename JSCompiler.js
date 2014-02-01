@@ -10,8 +10,12 @@ function js_conversion(Data, call) {
     if (call === undefined)
         return js_conversion_rename(Data);
 
-    if (Data.Conversions[call] instanceof Function) 
+    if (Data.Conversions[call] instanceof Function) {
+        log_js_compilation(["JS Compile: " + call]);
+        log_js_compilation("BUILT-IN");
+        log_js_compilation([]);
         return Data.Conversions[call];
+    }
 
     var inputs = inputs_of(call);
     var count = 1;
@@ -28,7 +32,7 @@ function js_conversion(Data, call) {
     for (var ask in Data.Asks[call])
         args.push(ask);
 
-    log_js_compilation(["JS Compile"]);
+    log_js_compilation(["JS Compile: " + call]);
     log_js_compilation(call);
     log_js_compilation(["Bytecode"]);
     var jsString = js_bytecode(Data, call, args, 0).jsString;
@@ -52,9 +56,9 @@ function js_conversion(Data, call) {
         for (var i = 0; i < arguments.length; i++)
             args.push(arguments[i]);
         log_js_execution([call]);
-        log_js_execution("ARGUMENTS: " + args.toString());
+        log_js_execution("ARGUMENTS: " + args.toString() + "\n");
         var res = funct.apply(this, arguments);
-        log_js_execution(res.toString() + " = " + args.toString());
+        log_js_execution("Returns: " + res.toString() + " from " + args.toString());
         log_js_execution([]);
         return res;
     };
@@ -176,16 +180,18 @@ function js_bytecode(Data, call, args, ip, tab, entered) {
                 else
                 {
                     //jsString += "function(){\nvar r=[];\nfor (var i=arguments.length-2;i>=0;i--){\nr.unshift(arguments[i]);\nif(arguments[i]!==\"Nothing\") {\nfor(i--;i>=0;i--)\nr.unshift(arguments[i]); \nreturn r;}}\nreturn \"Nothing\";\n}(),";
-                    jsString += tab + "function() {var r = \n";
+                    jsString += tab + "function() {\n";
+                    jsString += tab+tab_size+"var r = ";
                     jsString += "[" + args[0].replace(/'/g,"_");
                     for (var i = 1; i < args.length; i++)
                         jsString += "," + args[i].replace(/'/g,"_");
                     jsString += "];\n";
                     
-                    jsString += tab+"for(var i=0;i<r.length;i++)\n";
-                    jsString += tab+tab_size+"if(r[i]!==\"Nothing\")\n";
-                    jsString += tab+tab_size+tab_size+"return r;\n";
-                    jsString += tab+"return \"Nothing\"}(),";
+                    jsString += tab+tab_size+"for(var i=0;i<r.length;i++)\n";
+                    jsString += tab+tab_size+tab_size+"if(r[i]!==\"Nothing\")\n";
+                    jsString += tab+tab_size+tab_size+tab_size+"return r;\n";
+                    jsString += tab+tab_size+"return \"Nothing\";"
+                    jsString += tab + "\n}(),";
                 }
                 return ret();
                 break;

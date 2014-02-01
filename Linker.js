@@ -158,7 +158,6 @@ function link_conversions(Data)
         {
             if (Data.JITed[Data.JIT(conversion)] !== undefined)
                 continue;
-            log_jitting(conversion);
             Data.JITed[Data.JIT(conversion)] = Data.JIT(Data, conversion);
         }
         log_jitting([]);
@@ -634,7 +633,7 @@ function print_conversions(Data)
 
 function runInline()
 {
-    LOG(["INTERPRETING Inline"]);
+    LOG(["Running Inline Conversions"]);
     function dataifyParamString(str)
     {
         str += ",";
@@ -672,10 +671,10 @@ function runInline()
         var split = Data.ToRun[i].split("<");
         var params = dataifyParamString(split[1]);
 
-        var funct = CALL(Data, split[0]);
+        var funct = CALL(Data, split[0].split('=')[1]);
         var test = funct.apply(Data.JITed, params);
         test = test ? test : "Nothing";
-        LOG(test + " = " + Data.ToRun[i]);
+        LOG(split[0].split('=')[0] + ": " + test + " = " + Data.ToRun[i].split('=')[1]);
     }
     LOG([]);
 }

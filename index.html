@@ -1,15 +1,43 @@
 <html>
     
     <body>
-        <textarea id="output" rows=30 cols=100>
+        <table>
+            <tr>  
+                <td>
+                  <table>
+                    <tr>
+                    <td>
+                        <button id="runButton" onclick="clickedRun()">Run</button>
+                    </td>
+                    </tr>
+                    <tr>
+                    <td>
+                        <label><input type="checkbox" id="logExecution" value="value">Log Execution</label>
+                    </td>
+                    </tr>
+                    <tr>
+                    <td>
+                        <label><input type="checkbox" id="logJITTING" value="value">Log JIT</label>
+                    </td>
+                    </tr>
+                    <tr>
+                    <td>
+                        <label><input type="checkbox" id="logRestructure" value="value">Log Generic Creation</label>
+                    </td>
+                    </tr>
+                  </table>
+                </td>
+                <td>
+                 <textarea id="output" rows=30 cols=100>
 </textarea>
-        <button id="runButton" onclick="clickedRun()">Run</button>
-
+            </tr>
+        </table>
     <div>
 
         <textarea id="code" rows=50 cols=100>
 Test1 = Point2D,X,Y 1,2:
 Test2 = Summation,List'Number' [[[Nothing,3],2],1]:
+Test3 = STD,List'Number' [[[[Nothing,4],3],2],1]:
 
 
 X is Number
@@ -88,12 +116,23 @@ STD from List'Number'(l):
     window.onload = function()
     {
         document.getElementById("code").value += List_CPS;
+        
+        LOG(["RUNNING SANITY CHECKS"]);
+        LOG("The following output is the result of running some weird Composed code that");
+        LOG("verifies the compiler, optimizer, and runtime are working correctly\n\n");
+        LOG("Press the 'Run' button to see the sample code run");
+        LOG([]);
         Test_JSCompiler();
         RunCompiler();
     }
     
     function clickedRun()
     {
+        log_js_execution = document.getElementById("logExecution").checked ? LOG : NLOG;
+        log_linker_restructure = document.getElementById("logRestructure").checked ? LOG : NLOG;
+        log_jitting = document.getElementById("logJITTING").checked ? LOG : NLOG;
+        log_js_compilation = log_jitting;
+    
         var code = document.getElementById("code").value;
         document.getElementById("output").value = "";
         RESET();
