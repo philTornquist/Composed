@@ -29,7 +29,7 @@ function CodeDef(str) {
     this.restore = function() { this.index = this.saves.pop(); this.lineNumber = this.lineSaves.pop(); };
     this.release = function() { this.saves.pop(); this.lineSaves.pop(); }
     this.get = function() { return this.done() ? '\b' : this.str.charAt(this.index); };
-    this.next = function() { this.lineNumber += (this.str.charAt(this.index) == '\n') ? 1 : 0; this.index++; };
+    this.next = function() { this.lineNumber += (this.str.charAt(this.index) == '\n') ? 1 : 0; this.index++; if (this.skipcomment) this.skipcomment(); };
     this.hasNext = function() { return this.index < this.str.length; };
     this.done = function() { return this.index >= this.str.length; };
     this.indexBack = function(i) { var ret = ""; while(this.str.charAt(i) !== '\n' && i >= 0) ret = this.str.charAt(--i) + ret; return ret;};
@@ -37,6 +37,8 @@ function CodeDef(str) {
     this.white = function () { ch = this.get(); return ch == ' '|| ch == '\t'|| ch == '\n'; }
     this.clearWhite = function() { while(!this.done() && this.white()) this.next(); }
     this.hereForward = function() { var ret=""; var i=this.index; while(this.index + 50 > i)ret+=this.str[i++];return "\nCODE:\n"+ret; };
+    
+    this.skipcomment = function() { if (this.str.charAt(this.index) == '/') { this.index++; while(this.str.charAt(this.index) != '/' && this.str.charAt(this.index) != '\n') this.index++; if (this.str.charAt(this.index) == '/') this.index++; } };
 }
 
 function ConversionDefinition(output, inputs, selectors, bytecode) {
