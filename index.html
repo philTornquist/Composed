@@ -1,7 +1,7 @@
 <html>
     
     <body>
-        <textarea id="output" rows=50 cols=100>
+        <textarea id="output" rows=30 cols=100>
 </textarea>
         <button id="runButton" onclick="clickedRun()">Run</button>
 
@@ -59,6 +59,8 @@ STD from List'Number'(l):
         ] > Difference > Number
     ] > Quotient > Number > SquareRoot > Number > STD
 </textarea>
+<textarea id="bytecode" rows=50 cols=100></textarea>
+<textarea id="jsCode" rows=50 cols=100></textarea>
     </div>
     
     <script src="Library/List.cps.js"></script>
@@ -96,12 +98,13 @@ STD from List'Number'(l):
         document.getElementById("output").value = "";
         RESET();
         Data.JIT = js_conversion;
-        var conversions = parse(code);
         
-        Data.ToRun = conversions[1];
-        for(var i = 0; i < conversions[0].length; i++) {
-            load_conversion(Data, conversions[0][i].name, conversions[0][i].bytecode);
-        }
+        var conversions = compile(code);
+        load_bytecode(Data, conversions);
+        
+        
+        document.getElementById("bytecode").value = conversions;
+        document.getElementById("jsCode").value = "";
         
         link_conversions(Data);
         

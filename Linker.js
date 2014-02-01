@@ -21,6 +21,38 @@ function DataStore()
     this.JITed            = {};     //  Contains the JIT compiled calls
 }
 
+function load_bytecode(Data, bytecode)
+{
+    bytecode = bytecode.split("\n")
+    
+    var name = "";
+    var code = [];
+    
+    for (var i = 0; i < bytecode.length; i++)
+    {
+        var ins = bytecode[i].split(">")[0];
+        var data = bytecode[i].split(">")[1];
+        switch(ins)
+        {
+            case "Conversion":
+                if (name !== "")
+                    load_conversion(Data, name, code.join('\n'));
+                name = data;
+                code = [];
+                break;
+            case "Inline":
+                Data.ToRun.push(data);
+                break;
+            default:
+                code.push(bytecode[i]);
+                break;
+        }
+    }
+    
+    if (name !== "")
+        load_conversion(Data, name, code.join('\n'));
+}
+
 //  Loads conversion into Linker
 function load_conversion(Data, conversion, bytecode)
 {

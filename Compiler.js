@@ -50,6 +50,21 @@ function ConversionDefinition(output, inputs, selectors, bytecode) {
     for (var i = 1; i < selectors.length; i++) this.name += "," + selectors[i];
 }
 
+function compile(str) {
+    var convs = parse(str);
+    var bc = "";
+    for (var i = 0; i < convs[0].length; i++)
+    {
+        bc += "Conversion>" + convs[0][i].name + "\n";
+        bc += convs[0][i].bytecode + "\n";
+    }
+    for (var i = 0; i < convs[1].length; i++)
+    {
+        bc += "Inline>" + convs[1][i] + "\n";
+    }
+    return bc;
+}
+
 function parse(str) {
     var code = new CodeDef(str);
     var conversions = [];

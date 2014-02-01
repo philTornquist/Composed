@@ -25,13 +25,19 @@ function Test_JSCompiler()
     
         var SAVED = log_compiler_conversions;
         log_compiler_conversions = log_compiler ? LOG : NLOG;
-    var conversions = parse(TEST_CODE + List_CPS);
+    //var conversions = parse(TEST_CODE + List_CPS);
         log_compiler_conversions = SAVED;
     
-    Data.ToRun = conversions[1];
-    for(var i = 0; i < conversions[0].length; i++) {
+    var conversions = compile(TEST_CODE + List_CPS);
+    
+    document.getElementById("bytecode").value = conversions;
+    document.getElementById("jsCode").value = "";
+    
+    load_bytecode(Data, conversions);
+    /*for(var i = 0; i < conversions[0].length; i++) {
     	load_conversion(Data, conversions[0][i].name, conversions[0][i].bytecode);
-    }
+    }*/
+    
 
     var failed = 0;
     var results = [];

@@ -40,6 +40,10 @@ function js_conversion(Data, call) {
     log_js_compilation([]);
     log_js_compilation([]);
 
+    
+    document.getElementById("jsCode").value += "function " + call + "(" + args.join(',') + ") {\n" + jsString + "\n}\n\n";
+    
+
     var funct = new Function(args.join(','), jsString);
     if (log_js_execution == NLOG) return funct;
     
