@@ -31,7 +31,7 @@ function js_conversion(Data, call) {
     log_js_compilation(["JS Compile"]);
     log_js_compilation(call);
     log_js_compilation(["Bytecode"]);
-    var jsString = js_bytecode(Data, call, args, Data.Conversions[call]).jsString;
+    var jsString = js_bytecode(Data, call, args, 0).jsString;
     log_js_compilation([]);
     
     jsString = jsString.substring(0,jsString.length-1) + ';';
@@ -63,6 +63,7 @@ function js_conversion(Data, call) {
 //  Returns {jsString, ip}
 function js_bytecode(Data, call, args, ip, tab, entered) {
 
+    var bytecode = Data.Conversions[call];
     var tab_size = '   ';
     var jsString = "";
     var subString = "";
@@ -91,11 +92,11 @@ function js_bytecode(Data, call, args, ip, tab, entered) {
         return {"jsString": jsString, "ansJS":ansJS, "ip":ip};
     }
 
-    for (; ip < Data.Text.length; ip++) {
-        var tmp = Data.Text[ip].split(">");
+    for (; ip < bytecode.length; ip++) {
+        var tmp = bytecode[ip].split(">");
         var ins = tmp[0];
         var data = tmp[1];
-        log_js_compilation(Data.Text[ip]);
+        log_js_compilation(bytecode[ip]);
         switch (ins) {
             case "SubConversion":
                 var res = js_bytecode(Data, call, args, ip+1, tab);
@@ -107,7 +108,7 @@ function js_bytecode(Data, call, args, ip, tab, entered) {
                     (Data.DataStructures[output_of(data)] == data ||
                      Data.DataStructures[inputs_of(data)[0]] == inputs_of(data)[0]+","+output_of(data)))
                     {
-                        var nextIns = Data.Text[ip+1].split(">");
+                        var nextIns = bytecode[ip+1].split(">");
                         if (nextIns[0] == "Enter")
                         {
                             var res = js_bytecode(Data, call, args, ip+1, tab.substring(tab_size.length, tab.length), nextIns[1]);

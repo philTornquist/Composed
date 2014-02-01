@@ -5,7 +5,7 @@ var log_jitting = NLOG;
 function DataStore()
 {
 	this.Generics         = {};     //  Mapping of generic conversions to their bytecode structure
-	this.Conversions      = {};     //  Mapping of conversions to the code_pointer in [Text]
+	this.Conversions      = {};     //  Mapping of conversions to its bytecode
 	this.Links            = {};     //  Mapping of conversion calls to their location in [Text]
 	this.DataStructures   = {};     //  Contains all types that are Data Structures
     this.Selectors        = {};     //  Mapping of selelctor types to an array of possible selectors
@@ -15,7 +15,6 @@ function DataStore()
     this.Missing          = {};
 
     this.ToRun            = [];     //  Contains all conversions to be run
-	this.Text             = [];     //  Contains all compiled bytecode
     
     this.JIT              = function(){};
     this.JITed            = {};     //  Contains the JIT compiled calls
@@ -171,12 +170,12 @@ function create_conversion(Data, conversion)
 {
     //  Add this call to all function calls (sort of)
     if (Data.Conversions[conversion]) 
-        return Data.Conversions[conversion];
+        return true;
         
 	Data.Missing[conversion] = true;
 
 	link_conversions(Data);
-	return Data.Conversions[conversion];
+    return Data.Conversions[conversion] !== undefined;
 }
 
 function accepts_selector(Data, conversion) {
@@ -517,7 +516,6 @@ function compile_conversion(Data, conversion, bytecode)
         Data.Selectors[sel_type][selector_select(selectors[i])] = true;
     }
 
-	var start_pointer = Data.Text.length;
     var ask_count = 0;
 	for (var i = 0; i < bytecode.length; i++)
 	{
@@ -529,7 +527,7 @@ function compile_conversion(Data, conversion, bytecode)
 			case "Enter":
                 if (Data.Conversions[data] === undefined) Data.Missing[data] = true;
 				if (!Data.Links[data]) Data.Links[data] = [];
-				Data.Links[data].push(Data.Text.length);
+				Data.Links[data].push(conversion + ">" + i);
 				break;
             case "Push Selector":
                 var sel_type = selector_type(data);
@@ -546,8 +544,7 @@ function compile_conversion(Data, conversion, bytecode)
                 if (!Data.SubConversions[conversion]) Data.SubConversions[conversion] = [];
                 Data.SubConversions[conversion].push(data);
                 break;
-		}
-		Data.Text.push(bytecode[i]); 	
+		}	
 	}	
 	if (bytecode[0].split(">")[0] == "Data Structure") 
     {
@@ -556,7 +553,7 @@ function compile_conversion(Data, conversion, bytecode)
             Data.Specifics[output_of(conversion)] = true;
     }
     
-	return start_pointer;
+    return bytecode;
 }
 
 function build_structure(bytecode, i)
