@@ -32,11 +32,11 @@ function CodeDef(str) {
     this.next = function() { this.lineNumber += (this.str.charAt(this.index) == '\n') ? 1 : 0; this.index++; if (this.skipcomment) this.skipcomment(); };
     this.hasNext = function() { return this.index < this.str.length; };
     this.done = function() { return this.index >= this.str.length; };
-    this.indexBack = function(i) { var ret = ""; while(this.str.charAt(i) !== '\n' && i >= 0) ret = this.str.charAt(--i) + ret; return ret;};
-    this.hereBack = function() { var ret = ""; var i = this.index; while(this.index < i + 150 && i >= 0) ret = this.str[--i] + ret; return "\nCODE:\n"+ret;};
+    this.indexBack = function(i) { var ret = ""; while(this.str.charAt(i) !== '\n' && i > 0) ret = this.str.charAt(--i) + ret; return ret;};
+    this.hereBack = function() { var ret = ""; var i = this.index; while( (this.index < i + 150 || this.str[i] !== '\n') && i > 0) ret = this.str[--i] + ret; return "\nCODE:\n"+ret;};
     this.white = function () { ch = this.get(); return ch == ' '|| ch == '\t'|| ch == '\n'; }
     this.clearWhite = function() { while(!this.done() && this.white()) this.next(); }
-    this.hereForward = function() { var ret=""; var i=this.index; while(this.index + 50 > i)ret+=this.str[i++];return "\nCODE:\n"+ret; };
+    this.hereForward = function() { var ret=""; var i=this.index; while(i < this.str.length && (this.index + 50 > i || this.str[i] !== '\n'))ret+=this.str[i++];return "\nCODE:\n"+ret; };
     
     this.skipcomment = function() { if (this.str.charAt(this.index) == '/') { this.index++; while(this.str.charAt(this.index) != '/' && this.str.charAt(this.index) != '\n') this.index++; if (this.str.charAt(this.index) == '/') this.index++; } };
 }
@@ -80,7 +80,12 @@ function parse(str) {
     
     code.clearWhite();
     while (!code.done()) {
-        var stuff = parseElement(code);
+        try {
+            var stuff = parseElement(code);
+        } catch (e) {
+            alert(e + code.hereBack() + "<ERROR|" + code.hereForward().substring(7));
+            return [[],[]];
+        }
         for (var i = 0; i < stuff[0].length; i++) {
             conversions.push(stuff[0][i]);
             log_compiler_conversions([stuff[0][i].name]);
@@ -127,7 +132,7 @@ function parseElement(code) {
                     code.clearWhite();
                     var type = "[A]" + output + "." + parseLiteral(code);
                     code.clearWhite();
-                    if (code.get() !== "'") throw code.lineNumber = ": Expected a \"'\" here";
+                    if (code.get() !== "'") throw code.lineNumber + ": Expected a \"'\" here";
                     code.next();
                 }
 
@@ -135,6 +140,11 @@ function parseElement(code) {
                 else {
                     var type = parseConversionType(code, genericVar_MAP_name);
                 }
+                
+                for (var i = 0; i < types.length; i++)
+                    if (types[i] == type)
+                        throw code.lineNumber + ": Data type without unique types";
+                
                 types.addInOrder(type);
                 code.clearWhite();
             } while(code.get() == ',');

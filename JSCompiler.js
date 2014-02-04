@@ -76,14 +76,15 @@ function js_bytecode(Data, call, args, ip, tab, entered) {
     if (tab !== undefined)
         tab += tab_size;
     else
-        tab = '';
+        tab = tab_size;
     
     if (entered)
     {
         if (Data.Conversions[entered] === undefined)
         {
-            create_conversion(Data, entered);
-            link_conversions(Data);
+            throw "Conversion not created";
+            //create_conversion(Data, entered);
+            //link_conversions(Data);
         }
         for (var key in Data.Asks[entered])
             ansJS.push(tab + "function(){return\"Nothing\";}");

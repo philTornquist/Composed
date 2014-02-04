@@ -730,7 +730,7 @@ function runInline()
         }
         
         
-        logStr += test + " = " + Data.ToRun[i].split('=')[1];
+        logStr += test + " = " + call + " < " + params;
         
         LOG(logStr);
     }
