@@ -6,14 +6,19 @@ function DataStore()
 {
 	this.Generics         = {};     //  Mapping of generic conversions to their bytecode structure
 	this.Conversions      = {};     //  Mapping of conversions to its bytecode
-	this.Links            = {};     //  Mapping of conversion calls to their location in [Text]
+	
+    this.Optimized        = {};     //  Contains optimized bytecode
+    
 	this.DataStructures   = {};     //  Contains all types that are Data Structures
+    this.TypeSpecification= {};
     this.Selectors        = {};     //  Mapping of selelctor types to an array of possible selectors
     this.Specifics        = {};     //  Contains all types that are specific types
     this.Asks             = {};     //  Contains all asks of each conversion
     this.SubConversions   = {};     //  Contains array of subconversion names
+    
+    this.Links            = {};     //  Mapping of conversion calls to their location in [Text]
     this.Missing          = {};
-
+    
     this.ToRun            = [];     //  Contains all conversions to be run
     
     this.JIT              = function(){};
@@ -158,6 +163,21 @@ function link_conversions(Data)
         {
             if (Data.JITed[Data.JIT(conversion)] !== undefined)
                 continue;
+                
+                
+            if (Data.Conversions[conversion] instanceof Function)
+            {
+                Data.Optimized[conversion] = Data.Conversions[conversion];
+            }
+            else
+            {
+                var struc = build_structure(Data.Conversions[conversion], 0);
+                
+                struc = removeRedundantConversions(Data, struc);
+                
+                Data.Optimized[conversion] = collapse_structure(struc);
+            }
+            
             Data.JITed[Data.JIT(conversion)] = Data.JIT(Data, conversion);
         }
         log_jitting([]);
@@ -631,6 +651,24 @@ function print_conversions(Data)
     }
 }
 
+
+
+
+
+function CALL(Data, call) 
+{
+	var funct = Data.JITed[Data.JIT(call)];
+    if (funct === undefined)
+    {
+      var ip = create_conversion(Data, call);
+      funct = Data.JITed[Data.JIT(call)];
+    }
+	if (funct === undefined)
+		throw "Conversion does not exist: " + call;
+
+	return funct;
+}
+
 function runInline()
 {
     LOG(["Running Inline Conversions"]);
@@ -670,11 +708,31 @@ function runInline()
     {
         var split = Data.ToRun[i].split("<");
         var params = dataifyParamString(split[1]);
+        
+        split = split[0].split('=')
+        var call = split[1];
+        var assign = split[0];
 
-        var funct = CALL(Data, split[0].split('=')[1]);
+        var funct = CALL(Data, call);
         var test = funct.apply(Data.JITed, params);
-        test = test ? test : "Nothing";
-        LOG(split[0].split('=')[0] + ": " + test + " = " + Data.ToRun[i].split('=')[1]);
+        test = test !== undefined ? test : "Nothing";
+        
+        var logStr = assign + ": ";
+        
+        
+        if (output_of(call) == "String") 
+        {
+            function compact_string(composedStr) {
+                if (composedStr == "Nothing") return "";
+                return composedStr[0] + compact_string(composedStr[1]);
+            }
+            logStr += "\"" + compact_string(test) + "\" ";
+        }
+        
+        
+        logStr += test + " = " + Data.ToRun[i].split('=')[1];
+        
+        LOG(logStr);
     }
     LOG([]);
 }

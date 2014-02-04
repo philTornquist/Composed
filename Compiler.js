@@ -365,7 +365,12 @@ function ConstantConversion(constantStr) {
         else if (constantStr[0] == '"') {
             this.type = "Character";
             this.bytecode = function() {
-                return "Push Character>" + constantStr.substring(1, constantStr.length-1) + "\n";
+                if (this.containing) {
+                    return "Push Character>" + constantStr.substring(1, constantStr.length-1) + "\n";
+                }
+                else {
+                    return "Return Character>" + constantStr.substring(1, constantStr.length-1) + "\n";
+                }
             };
         }
         else

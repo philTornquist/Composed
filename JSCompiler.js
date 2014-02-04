@@ -10,11 +10,11 @@ function js_conversion(Data, call) {
     if (call === undefined)
         return js_conversion_rename(Data);
 
-    if (Data.Conversions[call] instanceof Function) {
+    if (Data.Optimized[call] instanceof Function) {
         log_js_compilation(["JS Compile: " + call]);
         log_js_compilation("BUILT-IN");
         log_js_compilation([]);
-        return Data.Conversions[call];
+        return Data.Optimized[call];
     }
 
     var inputs = inputs_of(call);
@@ -67,7 +67,7 @@ function js_conversion(Data, call) {
 //  Returns {jsString, ip}
 function js_bytecode(Data, call, args, ip, tab, entered) {
 
-    var bytecode = Data.Conversions[call];
+    var bytecode = Data.Optimized[call];
     var tab_size = '   ';
     var jsString = "";
     var subString = "";
@@ -108,24 +108,6 @@ function js_bytecode(Data, call, args, ip, tab, entered) {
                 ip = res.ip;
                 break;
             case "Enter":
-                if (inputs_of(data).length == 1 &&
-                    (Data.DataStructures[output_of(data)] == data ||
-                     Data.DataStructures[inputs_of(data)[0]] == inputs_of(data)[0]+","+output_of(data)))
-                    {
-                        var nextIns = bytecode[ip+1].split(">");
-                        if (nextIns[0] == "Enter")
-                        {
-                            var res = js_bytecode(Data, call, args, ip+1, tab.substring(tab_size.length, tab.length), nextIns[1]);
-                            ip = res.ip;
-                            //if (res.ansJS.length == 0)
-                                res.jsString = res.jsString.substring(0,res.jsString.length-2);
-                            if (entered !== undefined) jsString += tab;
-                            jsString += res.jsString + ',';//res.ansJS.join(",\n") + ',';
-                            if (entered === undefined) return ret();
-                            break;
-                        }
-                    }
-            
                 var res = js_bytecode(Data, call, args, ip+1, tab, data);
                 ip = res.ip;
                 if (res.ansJS.length == 0)
@@ -226,6 +208,10 @@ function js_bytecode(Data, call, args, ip, tab, entered) {
             case "Push Character":
                 jsString += tab + "\"" + data + "\",";
                 break;
+            case "Return Character":
+                jsString += "\"" + data + "\"; ";
+                return ret();
+                break;
             case "Push Selector":
                 jsString += '"' + data + '"' + ",";
                 break;
@@ -233,18 +219,7 @@ function js_bytecode(Data, call, args, ip, tab, entered) {
         if (ins !== "Answer" && ins !== "End Answers" && ins !== "SubConversion")
             jsString += '\n';
     }
-}
-
-function CALL(Data, call) 
-{
-	var funct = Data.JITed[Data.JIT(call)];
-    if (funct === undefined)
-    {
-      var ip = create_conversion(Data, call);
-      funct = Data.JITed[Data.JIT(call)];
-    }
-	if (funct === undefined)
-		throw "Conversion does not exist: " + call;
-
-	return funct;
+    
+    //  throw "Error in bytecode";
+    return ret();
 }

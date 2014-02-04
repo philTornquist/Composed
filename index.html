@@ -38,6 +38,7 @@
 Test1 = Point2D,X,Y 1,2:
 Test2 = Summation,List'Number' [[[Nothing,3],2],1]:
 Test3 = STD,List'Number' [[[[Nothing,4],3],2],1]:
+Test4 = String,Number 12345:
 
 
 X is Number
@@ -86,6 +87,33 @@ STD from List'Number'(l):
             1
         ] > Difference > Number
     ] > Quotient > Number > SquareRoot > Number > STD
+    
+String from Number(n):
+    mod: [n, 10] > Modulus > Number
+    quo: [
+            [
+                n,
+                mod
+            ] > Difference > Number,
+            10
+         ] > Quotient > Number
+    
+    check9: [mod, 9] > Compare'Character'{equal: "9" } > Character
+    check8: [mod, 8] > Compare'Character'{equal: "8" less: check9 greater:check9 } > Character
+    check7: [mod, 7] > Compare'Character'{equal: "7" less: check8 greater:check8 } > Character
+    check6: [mod, 6] > Compare'Character'{equal: "6" less: check7 greater:check7 } > Character
+    check5: [mod, 5] > Compare'Character'{equal: "5" less: check6 greater:check6 } > Character
+    check4: [mod, 4] > Compare'Character'{equal: "4" less: check5 greater:check5 } > Character
+    check3: [mod, 3] > Compare'Character'{equal: "3" less: check4 greater:check4 } > Character
+    check2: [mod, 2] > Compare'Character'{equal: "2" less: check3 greater:check3 } > Character
+    check1: [mod, 1] > Compare'Character'{equal: "1" less: check2 greater:check2 } > Character
+    check0: [mod, 0] > Compare'Character'{equal: "0" less: check1 greater:check1 } > Character
+
+    [n, 0] > Compare'String' {
+        greater: [check0, quo > String] > AppendedString > String
+        less: [check0, quo > String] > AppendedString > String
+    } > String
+    
 </textarea>
 <textarea id="bytecode" rows=50 cols=100></textarea>
 <textarea id="jsCode" rows=50 cols=100></textarea>
@@ -99,6 +127,7 @@ STD from List'Number'(l):
     <script src="ConversionUtils.js"></script>
 
     <script src="Compiler.js"></script>
+    <script src="Optimize.js"></script>
 
     <script src="Linker.js"></script>
     <script src="Built-In.js"></script>
@@ -115,7 +144,7 @@ STD from List'Number'(l):
 <script>
     window.onload = function()
     {
-        document.getElementById("code").value += List_CPS;
+        document.getElementById("code").value += List_CPS + String_CPS;
         
         LOG(["RUNNING SANITY CHECKS"]);
         LOG("The following output is the result of running some weird Composed code that");
