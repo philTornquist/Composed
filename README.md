@@ -1,7 +1,9 @@
 Composed
 ========
 
-Composed is a general purpose programming language designed to give the compiler more information about the program it is compiling. This is achieved through a statically-typed and functional language where functions are replaced with 'Data Conversions'. Data Conversions are named and referenced by their input and output types. Types in Composed should reflect the interpretation of the data and not the representation. This gives the compiler more flexibility towards the actual representation and provides the programmer with more context. 
+Composed is a general purpose programming language designed to give the compiler more information about the program it is compiling. This is achieved through a statically-typed and functional language where functions are replaced with 'Data Conversions'. Data Conversions are named and referenced by their input and output types. Types in Composed should reflect the interpretation of the data and not the representation. This gives the compiler more flexibility towards the actual representation and provides the programmer with more context.
+
+A JavaScript implementation of Composed is available [here](http://philTornquist.github.io/Composed).
 
 Composed can become verbose but leads to code that is easy to maintain and extend. There are only a few specific instances where existing code will need to be modified to add a new feature. With a proper IDE the negatives of the verbosity can be elimated.
 
