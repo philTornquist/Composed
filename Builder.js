@@ -84,13 +84,4 @@ function AddParserConversions()
         var code = arguments[0];
         return code[1][code[2]];
     }
-    
-    Data.Asks["[A]Compare,Character,Character"] = {};
-    Data.Asks["[A]Compare,Character,Character"]["$less"] = 0;
-    Data.Asks["[A]Compare,Character,Character"]["$equal"] = 1;
-    Data.Asks["[A]Compare,Character,Character"]["$greater"] = 2;
-    Data.Generics["[A]Compare,Character,Character"] = function(C1,C2,less,equal,greater)
-    {
-        return C1 < C2 ? less.apply(this) : (C1 == C2 ? equal.apply(this) : greater.apply(this));
-    }
 }
