@@ -47,22 +47,22 @@ function operateAST(Data, struc, component_funct, ast_funct, conversion, extras)
 }
 
 function ast_fun(Data, struc) {
-  if (struc.length == 3)
-  {
-      var split = struc[0].split('>');
-      var data = split[1];
-      if (split[0] === "Enter")
-      {
-          if (inputs_of(data).length == 1)
-          {
-              if (Data.DataStructures[output_of(data)] == data && !Data.TypeSpecification[output_of(data)])
-                  return struc[1];
-              if (Data.DataStructures[inputs_of(data)[0]] == inputs_of(data)[0]+","+output_of(data) && !Data.TypeSpecification[inputs_of(data)[0]])
-                  return struc[1];
-          }
-      }
-  }
-  return struc;
+    if (struc.length == 3)
+    {
+        var split = struc[0].split('>');
+        var data = split[1];
+        if (split[0] === "Enter")
+        {
+            if (inputs_of(data).length == 1)
+            {
+                if (Data.DataStructures[output_of(data)] == data && !Data.TypeSpecification[output_of(data)])
+                    return struc[1];
+                if (Data.DataStructures[inputs_of(data)[0]] == inputs_of(data)[0]+","+output_of(data) && !Data.TypeSpecification[inputs_of(data)[0]])
+                    return struc[1];
+            }
+        }
+    }
+    return struc;
 };
 
 function removeRedundantConversions(Data, struc)
@@ -76,3 +76,32 @@ function removeRedundantConversions(Data, struc)
 }
 
 
+
+function inlineConversion(Data, struc, conversion) 
+{
+    if (struc[0] == "Enter>Sum,Number,Number")
+    {
+        var args = [];
+        for (var i = 1; i < struc.length-1; i++)
+        {
+            args.push(struc[i]);
+        }
+
+        var inlineConversion = struc[0].split(">")[1];
+
+        var bcStruc = build_structure(Data.Conversions[inlineConversion]);
+        var inlineBC = [];
+        for (var i = 1; i < bcStruc.length; i++)
+            inlineBC.push(bcStruc[i]);
+
+        return operateAST(Data, inlineBC, function(Data, ins, data, conversion, extras)
+        {
+            if (ins == "Push Param" || ins == "Return Param")
+            {
+                return extras[parseInt(data)];
+            }
+            return ins + ">" + data;
+        }, undefined, inlineConversion, args);
+    }
+    return struc;
+}

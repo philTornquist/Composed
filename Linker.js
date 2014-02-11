@@ -25,6 +25,16 @@ function DataStore()
     this.JITed            = {};     //  Contains the JIT compiled calls
 }
 
+function optimize(Data, conversion) 
+{
+    var struc = build_structure(Data.Conversions[conversion], 0);
+                
+    struc = removeRedundantConversions(Data, struc);
+    struc = operateAST(Data, struc, undefined, inlineConversion, conversion);
+    
+    Data.Optimized[conversion] = collapse_structure(struc);
+}
+
 function load_bytecode(Data, bytecode)
 {
     bytecode = bytecode.split("\n")
@@ -176,13 +186,12 @@ function link_conversions(Data)
             }
             else
             {
-                var struc = build_structure(Data.Conversions[conversion], 0);
-                
-                struc = removeRedundantConversions(Data, struc);
-                
-                Data.Optimized[conversion] = collapse_structure(struc);
+                optimize(Data, conversion);
             }
             
+        }
+        for (var conversion in Data.Optimized)
+        {
             Data.JITed[Data.JIT(conversion)] = Data.JIT(Data, conversion);
         }
         log_jitting([]);
