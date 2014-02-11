@@ -162,7 +162,7 @@ function parseElement(code) {
                     if (code.get() == ':') {
                         code.next();
                         code.clearWhite();
-                        bytecode = parseConversion(code, {"value":0}, {"value":types[0]}, {}, {}, {}).bytecode();
+                        bytecode = "Specification>\n"+parseConversion(code, {"value":0}, {"value":types[0]}, {}, {}, {}).bytecode();
                     }
                     else {
                         bytecode = "Data Structure>1";

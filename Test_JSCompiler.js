@@ -5,10 +5,10 @@ function Conversion(call, args, expanded)
 	if (funct === undefined)
 	{
 		if (inputs_of(call).length == 1 && inputs_of(call)[0] === "Nothing") 
-        	{
+        {
         	funct = function() { return "Nothing"; };
         	Data.JS[call] = funct;
-        	}
+        }
 	}
 }
 
@@ -21,7 +21,7 @@ function Test_JSCompiler()
     LOG(["TEST!!! JSCompiler"]);
     
     RESET();
-    Data.JIT = js_conversion;
+    Data.JIT = JS_JITTER;
     
         var SAVED = log_compiler_conversions;
         log_compiler_conversions = log_compiler ? LOG : NLOG;
@@ -131,7 +131,6 @@ function Test_JSCompiler()
     function listTo(val) {var r=[];for(var i=0;i<val;i++)r.push(i);return r;}
 	check(  std(listTo(500)),                       "STD,List'Number'",                                       [make_list(listTo(500), 'L')]);
 	
-
     LOG(failed !== 0 ? "Tests Failed " + failed : "Tests Complete!");
     LOG("\n");
     

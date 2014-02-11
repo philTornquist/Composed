@@ -186,6 +186,25 @@ Factorial is Number:
 <script>
     window.onload = function()
     {
+        /*
+        RESET();
+        
+        var test = "Number from Number(z): sum: [1,2]>Sum>Number [1, z] > Compare'Number'{ less:2 greater: sum } > Number";
+        
+        Data.JIT = JS_JITTER;
+        
+        Data.Specifics["Compare'Number'"] = "Compare'Number'";
+        Data.DataStructures["Compare'Number'"] = "Compare'Number',Number";
+        
+        var conversions = compile(test);
+        load_bytecode(Data, conversions);
+        
+        link_conversions(Data);
+        
+        var r1 = CALL(Data,"Number,Number").call(Data.JITed, 1);
+        var r2 = CALL(Data,"Number,Number").call(Data.JITed, 2);
+        var r3 = CALL(Data,"Number,Number").call(Data.JITed, 0);*/
+    
         document.getElementById("code").value += List_CPS + String_CPS;
         
         LOG(["RUNNING SANITY CHECKS"]);
@@ -207,7 +226,7 @@ Factorial is Number:
         var code = document.getElementById("code").value;
         document.getElementById("output").value = "";
         RESET();
-        Data.JIT = js_conversion;
+        Data.JIT = JS_JITTER;
         
         var conversions = compile(code);
         load_bytecode(Data, conversions);

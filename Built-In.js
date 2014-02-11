@@ -4,9 +4,10 @@ function RESET() {
 Data = new DataStore();
 
 Data.DataStructures["Sum"] = "Sum,Number";
-Data.Conversions["Sum,Number,Number"] = function() {
+Data.Conversions["Sum,Number,Number"] = ["Conversion>Sum,Number,Number","ENTER>","Push Param>0","IGNORE> + ","Push Param>1","EXIT>"];
+/*Data.Conversions["Sum,Number,Number"] = function() {
     return arguments[0] + arguments[1];
-}
+}*/
 Data.Conversions["Number,Sum"] = function() {
     return arguments[0];
 }

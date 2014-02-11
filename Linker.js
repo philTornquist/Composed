@@ -42,13 +42,14 @@ function load_bytecode(Data, bytecode)
                 if (name !== "")
                     load_conversion(Data, name, code.join('\n'));
                 name = data;
-                code = [];
+                code = [bytecode[i]];
                 break;
             case "Inline":
                 Data.ToRun.push(data);
                 break;
             default:
-                code.push(bytecode[i]);
+                if (bytecode[i] !== "")
+                    code.push(bytecode[i]);
                 break;
         }
     }
@@ -71,11 +72,15 @@ function load_conversion(Data, conversion, bytecode)
 
         //  If  the conversion is to build a data structure
         //    Then add is to the list of data structure types
-		if (bytecode[0].split(">")[0] == "Data Structure")
+		if (bytecode[1].split(">")[0] == "Data Structure")
         {
 			Data.DataStructures[generic_type(output_of(conversion))] = conversion;
-            if (bytecode[0].split(">")[1] == "1")
+            if (bytecode[1].split(">")[1] == "1")
                 Data.Specifics[generic_type(output_of(conversion))] = true;
+        }
+        else if (bytecode[1].split(">")[0] == "Specification") {
+            Data.DataStructures[generic_type(output_of(conversion))] = conversion;
+            Data.Specifics[generic_type(output_of(conversion))] = true;
         }
 	}
     //  Conversion is not generic
@@ -565,10 +570,11 @@ function compile_conversion(Data, conversion, bytecode)
                 break;
 		}	
 	}	
-	if (bytecode[0].split(">")[0] == "Data Structure") 
+	if (bytecode[1].split(">")[0] == "Data Structure" ||
+        bytecode[1].split(">")[0] == "Specification") 
     {
         Data.DataStructures[output_of(conversion)] = conversion;
-        if (bytecode[0].split(">")[1] == "1")
+        if (bytecode[1].split(">")[1] == "1")
             Data.Specifics[output_of(conversion)] = true;
     }
     
@@ -584,18 +590,19 @@ function build_structure(bytecode, i)
 		var data = bytecode[i].split(">")[1];
 		switch(ins) {
 			case "Enter":
+            case "ENTER":
 				var subcall = build_structure(bytecode, i+1);
 				subcall[1].unshift(bytecode[i]);
 				inputs.push(subcall[1]);
 				i = subcall[0];
 				break;
-			case "Inject":
 			case "Call":
+            case "EXIT":
 				inputs.push(bytecode[i]);
 				return [i, inputs];
 				break;
 			default:
-				inputs.push(bytecode[i]);
+                inputs.push(bytecode[i]);
 				break;
 		}
 	}

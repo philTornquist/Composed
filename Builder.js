@@ -24,10 +24,9 @@ function RunCompiler()
         CCompiler_CPS;
     
     
-    var conversions = parse(CODE)[0];
-    for (var i = 0; i < conversions.length; i++)
-        load_conversion(Data, conversions[i].name, conversions[i].bytecode);
+    var conversions = compile(CODE);
     
+    load_bytecode(Data, conversions);
     link_conversions(Data);
     
     var conversion = "Parser\'Literal\',Parser\'Number\'";
