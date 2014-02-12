@@ -5,9 +5,6 @@ function js_conversion_rename(conversion) {
     return conversion.replace(/'/g,"_").replace(/,/g,"$").replace(/-/g,"_$_");
 }
 
-
-
-
 function JS_JITTER(Data, conversion)
 {
     if (conversion === undefined)
@@ -21,8 +18,8 @@ function JS_JITTER(Data, conversion)
     log_js_compilation(["JS Compile: " + conversion]);
     log_js_compilation(conversion);
     
-    var s0 = build_structure(Data.Optimized[conversion], 0);
-    var s1 = operateAST(Data, s0, undefined, JS_reorderAnswers, conversion);
+    var s0 = Data.Optimized[conversion];
+    var s1 = operateAST(Data, s0, undefined, inlineConversion, conversion);
     var s2 = operateAST(Data, s1, undefined, JS_addEndConversion);
     var s3 = operateAST(Data, s2, undefined, JS_insertCommas);
     var s4 = operateAST(Data, s3, undefined, JS_insertParamNames, conversion);
@@ -32,7 +29,7 @@ function JS_JITTER(Data, conversion)
     
     
     log_js_compilation(["Bytecode"]);
-    log_js_compilation(Data.Optimized[conversion]);
+    log_js_compilation(Data.Conversions[conversion]);
     log_js_compilation([]);
     
     log_js_compilation(["JS"]);
@@ -115,7 +112,7 @@ function JS_insertParamNames(Data, struc, call, extras)
     }
     
     for (var ask in Data.Asks[call])
-        args.push(ask);
+        args.push("$"+ask);
         
     var bc = operateAST(Data, struc, function(Data, ins, data, args)
     {   
@@ -175,7 +172,7 @@ function JS_reorderAnswers(Data, struc, call)
                     break;
                 case "Answer":
                     for (var key in Data.Asks[entered])
-                        if (key == "$"+data)
+                        if (key == data)
                             ans[Data.Asks[entered][key]] = ["Answer>"+key, struc[i+1]];
                     i++;
                     break;

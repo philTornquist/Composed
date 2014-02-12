@@ -1,4 +1,20 @@
 
+function optimize(Data, conversion)
+{
+    var bc = Data.Conversions[conversion];
+    if (bc instanceof Function)
+    {
+        Data.Optimized[conversion] = bc; 
+        return;
+    }
+    
+    var s0 = build_structure(bc, 0);
+    var s1 = removeRedundantConversions(Data, s0);
+    var s2 = operateAST(Data, s1, undefined, JS_reorderAnswers, conversion);
+    
+    Data.Optimized[conversion] = s2;
+}
+
 function operateAST(Data, struc, component_funct, ast_funct, conversion, extras)
 {
     extras = extras ? extras : {};
@@ -7,6 +23,7 @@ function operateAST(Data, struc, component_funct, ast_funct, conversion, extras)
         throw 'ee';
     }
     
+    var save = struc;
     struc = ast_funct ? ast_funct(Data, struc, conversion, extras) : struc;
     
     if (!(struc instanceof Array)) return struc;
@@ -79,7 +96,7 @@ function removeRedundantConversions(Data, struc)
 
 function inlineConversion(Data, struc, conversion) 
 {
-    if (struc[0] == "Enter>Sum,Number,Number")
+    if (struc[0].split(">")[0] == "Enter")
     {
         var args = [];
         for (var i = 1; i < struc.length-1; i++)
@@ -89,19 +106,41 @@ function inlineConversion(Data, struc, conversion)
 
         var inlineConversion = struc[0].split(">")[1];
 
-        var bcStruc = build_structure(Data.Conversions[inlineConversion]);
+        if (Data.Recursive[inlineConversion]) return struc;
+
+        var lookupConversion = Data.PassCompiled[Data.CurrentPass-1][inlineConversion];
+        if (lookupConversion instanceof Function) return struc;
+        //if (lookupConversion.length > 10) return struc;
+        //  Contains selector type
+        if (inputs_of(inlineConversion)[0][0] == "-") return struc;
+        
+        var bcStruc = lookupConversion;
+        if (bcStruc === undefined) 
+            return struc;
+        if (!(bcStruc[1] instanceof Array)) return struc;
+        
+        LOG("Inlining: " + inlineConversion + " into: " + conversion);
+        
         var inlineBC = [];
         for (var i = 1; i < bcStruc.length; i++)
             inlineBC.push(bcStruc[i]);
 
-        return operateAST(Data, inlineBC, function(Data, ins, data, conversion, extras)
+        var res = operateAST(Data, inlineBC, function(Data, ins, data, conversion, extras)
         {
             if (ins == "Push Param" || ins == "Return Param")
             {
-                return extras[parseInt(data)];
+                return [extras[parseInt(data)]];
+            }
+            if (ins == "Ask" || ins == "Return Ask")
+            {
+                var askOffset = Data.Asks[inlineConversion][data];
+                var res = [extras[inputs_of(inlineConversion).length + askOffset][1]];
+                return res;
             }
             return ins + ">" + data;
         }, undefined, inlineConversion, args);
+        
+        return res[0];
     }
     return struc;
 }

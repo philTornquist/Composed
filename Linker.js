@@ -6,9 +6,9 @@ function DataStore()
 {
 	this.Generics         = {};     //  Mapping of generic conversions to their bytecode structure
 	this.Conversions      = {};     //  Mapping of conversions to its bytecode
-	
-    this.Optimized        = {};     //  Contains optimized bytecode
     
+    
+    this.Recursive        = {};     //  Mapping of conversions that are recursive
 	this.DataStructures   = {};     //  Contains all types that are Data Structures
     this.TypeSpecification= {};
     this.Selectors        = {};     //  Mapping of selelctor types to an array of possible selectors
@@ -21,18 +21,46 @@ function DataStore()
     
     this.ToRun            = [];     //  Contains all conversions to be run
     
+    this.Passes           = [];
+    this.PassCompiled     = [];
+    
     this.JIT              = function(){};
     this.JITed            = {};     //  Contains the JIT compiled calls
-}
-
-function optimize(Data, conversion) 
-{
-    var struc = build_structure(Data.Conversions[conversion], 0);
-                
-    struc = removeRedundantConversions(Data, struc);
-    struc = operateAST(Data, struc, undefined, inlineConversion, conversion);
     
-    Data.Optimized[conversion] = collapse_structure(struc);
+    
+    
+    this.Passes = [
+    
+    function(Data, conversion, struc) { return build_structure(struc, 0); },
+    function(Data, conversion, struc) { return removeRedundantConversions(Data, struc); },
+    function(Data, conversion, struc) { return operateAST(Data, struc, undefined, JS_reorderAnswers, conversion); },
+    function(Data, conversion, struc) { return operateAST(Data, struc, undefined, inlineConversion, conversion); },
+    function(Data, conversion, struc) { return operateAST(Data, struc, undefined, JS_addEndConversion); },
+    function(Data, conversion, struc) { return operateAST(Data, struc, undefined, JS_insertCommas); },
+    function(Data, conversion, struc) { return operateAST(Data, struc, undefined, JS_insertParamNames, conversion); },
+    function(Data, conversion, struc) { return operateAST(Data, struc, JS_Compile, undefined, conversion); },
+    function(Data, conversion, struc) { 
+        var bc = JS_collapse_structure(struc).join("");
+        var args = Data.PassCompiled[Data.CurrentPass-2][conversion][1].split(">")[1];
+    
+        document.getElementById("jsCode").value += "function " + conversion + "(" + args + ") {\n" + bc + "\n}\n\n";
+        
+        var funct = new Function(args, bc);
+        if (log_js_execution == NLOG) return funct;
+        
+        return function() {
+            var args = [];
+            for (var i = 0; i < arguments.length; i++)
+                args.push(arguments[i]);
+            log_js_execution([conversion]);
+            log_js_execution("ARGUMENTS: " + args.toString() + "\n");
+            var res = funct.apply(this, arguments);
+            if (res === undefined) throw "error with result";
+            log_js_execution("Returns: " + res.toString() + " from " + args.toString());
+            log_js_execution([]);
+            return res;
+        };
+    } ];
 }
 
 function load_bytecode(Data, bytecode)
@@ -174,26 +202,27 @@ function link_conversions(Data)
     else
     {
         log_jitting(["JITTING"]);
-        for (var conversion in Data.Conversions)
+        
+        for (var i = 0; i < Data.Passes.length; i++)
         {
-            if (Data.JITed[Data.JIT(conversion)] !== undefined)
-                continue;
-                
-                
-            if (Data.Conversions[conversion] instanceof Function)
-            {
-                Data.Optimized[conversion] = Data.Conversions[conversion];
-            }
-            else
-            {
-                optimize(Data, conversion);
-            }
+            var pass = Data.Passes[i];
+            Data.CurrentPass = i;
+            if (Data.PassCompiled.length <= i) Data.PassCompiled.push({});
             
+            for (var conversion in Data.Conversions)
+            {
+                if (Data.JITed[Data.JIT(conversion)] !== undefined)
+                    continue;
+                
+                var bc = i >= 1 ? Data.PassCompiled[i-1][conversion] : Data.Conversions[conversion];
+            
+                Data.PassCompiled[i][conversion] = (bc instanceof Function) ? bc : pass(Data, conversion, bc);
+            }
         }
-        for (var conversion in Data.Optimized)
-        {
-            Data.JITed[Data.JIT(conversion)] = Data.JIT(Data, conversion);
-        }
+        
+        for (var conversion in Data.PassCompiled[Data.PassCompiled.length-1])
+            Data.JITed[Data.JIT(conversion)] = Data.PassCompiled[Data.PassCompiled.length-1][conversion];
+        
         log_jitting([]);
     }
 }
@@ -558,6 +587,7 @@ function compile_conversion(Data, conversion, bytecode)
 		switch(ins)
 		{
 			case "Enter":
+                if (data === conversion) Data.Recursive[data] = true;
                 if (Data.Conversions[data] === undefined) Data.Missing[data] = true;
 				if (!Data.Links[data]) Data.Links[data] = [];
 				Data.Links[data].push(conversion + ">" + i);
@@ -570,8 +600,8 @@ function compile_conversion(Data, conversion, bytecode)
             case "Return Ask":
             case "Ask":
                 if (!Data.Asks[conversion]) Data.Asks[conversion] = {};
-                if (Data.Asks[conversion]["$"+data] === undefined)
-                    Data.Asks[conversion]["$"+data] = ask_count++;
+                if (Data.Asks[conversion][data] === undefined)
+                    Data.Asks[conversion][data] = ask_count++;
                 break;
             case "SubConversion":
                 if (!Data.SubConversions[conversion]) Data.SubConversions[conversion] = [];
