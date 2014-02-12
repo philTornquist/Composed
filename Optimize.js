@@ -63,7 +63,7 @@ function operateAST(Data, struc, component_funct, ast_funct, conversion, extras)
     return nc;
 }
 
-function ast_fun(Data, struc) {
+function removeRedundantConversions(Data, struc) {
     if (struc.length == 3)
     {
         var split = struc[0].split('>');
@@ -81,17 +81,6 @@ function ast_fun(Data, struc) {
     }
     return struc;
 };
-
-function removeRedundantConversions(Data, struc)
-{
-    var nc = operateAST(Data, struc, undefined, ast_fun);
-    if (nc[0].indexOf("Push") == 0)
-    {
-        nc[0] = nc[0].replace("Push", "Return");
-    }
-    return nc;
-}
-
 
 
 function inlineConversion(Data, struc, conversion) 
@@ -127,11 +116,11 @@ function inlineConversion(Data, struc, conversion)
 
         var res = operateAST(Data, inlineBC, function(Data, ins, data, conversion, extras)
         {
-            if (ins == "Push Param" || ins == "Return Param")
+            if (ins == "Param")
             {
                 return [extras[parseInt(data)]];
             }
-            if (ins == "Ask" || ins == "Return Ask")
+            if (ins == "Ask")
             {
                 var askOffset = Data.Asks[inlineConversion][data];
                 var res = [extras[inputs_of(inlineConversion).length + askOffset][1]];

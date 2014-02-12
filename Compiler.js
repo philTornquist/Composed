@@ -188,7 +188,7 @@ function parseElement(code) {
                 add(types[i], 
                     [output], 
                     [],
-                    "Return Data>" + i);
+                    "Element>" + i);
 
                 if (types.length == 1) continue;
                 
@@ -206,12 +206,12 @@ function parseElement(code) {
                 {
                     if (j == i)
                     {
-                        bytecode += "Push Param>" + (injectArray[0] == types[j] ? 0 : 1) + "\n";
+                        bytecode += "Param>" + (injectArray[0] == types[j] ? 0 : 1) + "\n";
                     }
                     else
                     {
                         bytecode += "Enter>" + types[j] + "," + output + "\n";
-                        bytecode += "Push Param>" + (injectArray[0] == output ? 0 : 1) + "\n";
+                        bytecode += "Param>" + (injectArray[0] == output ? 0 : 1) + "\n";
                         bytecode += "Call>" + types[j] + "," + output + "\n";
                     }
                 }
@@ -336,12 +336,7 @@ function VariableConversion(varNumber, type) {
     this.varNumber = varNumber;
     this.type = type;
     this.bytecode = function() {
-        if (this.containing) {
-            return "Push Param>" + this.varNumber + "\n";
-        }
-        else {
-            return "Return Param>" + this.varNumber + "\n";
-        }
+        return "Param>" + this.varNumber + "\n";
     };
 }
 
@@ -349,12 +344,7 @@ function SubConversion(subNumber, type) {
     this.subNumber = subNumber;
     this.type = type;
     this.bytecode = function() {
-        if (this.containing) {
-            return "Push Sub>" + this.subNumber + "\n";
-        }
-        else {
-            return "Return Sub>" + this.subNumber + "\n";
-        }
+        return "Sub>" + this.subNumber + "\n";
     };
 }
 
@@ -364,23 +354,13 @@ function ConstantConversion(constantStr) {
             this.type = "Nothing";
             this.bytecode = function() {
                 //return "Ask>Nothing" + "\n";
-                if (this.containing) {
-                    return "Push Nothing>\n";
-                }
-                else {
-                    return "Return Nothing>\n";
-                }
+                return "Nothing>\n";
             }
         }
         else if (constantStr[0] == '"') {
             this.type = "Character";
             this.bytecode = function() {
-                if (this.containing) {
-                    return "Push Character>" + constantStr.substring(1, constantStr.length-1) + "\n";
-                }
-                else {
-                    return "Return Character>" + constantStr.substring(1, constantStr.length-1) + "\n";
-                }
+                return "Character>" + constantStr.substring(1, constantStr.length-1) + "\n";
             };
         }
         else
@@ -391,12 +371,7 @@ function ConstantConversion(constantStr) {
     else {
         this.type = "Number";
         this.bytecode = function() {
-            if (this.containing) {
-                return "Push Number>" + parseFloat(constantStr) + "\n";
-            }
-            else {
-                return "Return Number>" + parseFloat(constantStr) + "\n";
-            }
+            return "Number>" + parseFloat(constantStr) + "\n";
         };
     }
 }
@@ -405,7 +380,7 @@ function SelectorConversion(selector, type) {
     this.type = "-" + type;
     this.selector = selector;
     this.bytecode = function() {
-        return "Push Selector>" + this.type.substring(1) + "-" + this.selector + "\n";
+        return "Selector>" + this.type.substring(1) + "-" + this.selector + "\n";
     };
 }
 
@@ -413,12 +388,7 @@ function AskConversion(caseName, type) {
     this.type = type;
     this.caseName = caseName;
     this.bytecode = function() {
-        if (this.containing) {
-            return "Ask>" + caseName + "\n";
-        }
-        else {
-            return "Return Ask>" + caseName + "\n";
-        }
+        return "Ask>" + caseName + "\n";
     }
 }
 

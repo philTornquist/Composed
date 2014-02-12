@@ -4,7 +4,13 @@ function RESET() {
 Data = new DataStore();
 
 Data.DataStructures["Sum"] = "Sum,Number";
-Data.Conversions["Sum,Number,Number"] = ["Conversion>Sum,Number,Number","ENTER>","Push Param>0","IGNORE> + ","Push Param>1","EXIT>"];
+Data.Conversions["Sum,Number,Number"] = [
+    "Conversion>Sum,Number,Number",
+    "ENTER>",
+    "Param>0",
+    "IGNORE> + ",
+    "Param>1",
+    "EXIT>"];
 /*Data.Conversions["Sum,Number,Number"] = function() {
     return arguments[0] + arguments[1];
 }*/
@@ -92,15 +98,15 @@ Data.Asks["[A]Compare,Number,Number"]["greater"] = 2;
 /*Data.Generics["[A]Compare,Number,Number"] = [
     "Conversion>[A]Compare,Number,Number",
     "ENTER>",
-    "Push Param>0",
+    "Param>0",
     "IGNORE> < ",
-    "Push Param>1",
+    "Param>1",
     "IGNORE> ? ",
     "Ask>less",
     "IGNORE> : (",
-    "Push Param>0",
+    "Param>0",
     "IGNORE> === ",
-    "Push Param>1",
+    "Param>1",
     "IGNORE> ? ",
     "Ask>equal:,
     "IGNORE> : ",

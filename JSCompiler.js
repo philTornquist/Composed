@@ -118,11 +118,11 @@ function JS_insertParamNames(Data, struc, call, extras)
     {   
         var nc = [];
         
-        if (ins == "Push Param" || ins == "Return Param")
+        if (ins == "Param")
         {
             nc.push(ins + ">" + args[parseInt(data)]);
         }
-        else if (ins == "Push Sub" || ins == "Return Sub")
+        else if (ins == "Sub")
         {
             nc.push(ins + ">" + Data.SubConversions[call][parseInt(data)]);
         }
@@ -168,7 +168,7 @@ function JS_reorderAnswers(Data, struc, call)
                     
                     
                     for (var key in Data.Asks[entered])
-                        ans.push(["Answer>" + key, "Return Nothing>"]);
+                        ans.push(["Answer>" + key, "Nothing>"]);
                     break;
                 case "Answer":
                     for (var key in Data.Asks[entered])
@@ -263,26 +263,17 @@ function JS_Compile(Data, ins, data, conversion, extras)
         case "Ask":
             jsString = "($" + data + " ? $" + data + ".apply(this):\"Nothing\") ";
             break;
-        case "Return Ask":
-            jsString = "($" + data + " ? $" + data + ".apply(this):\"Nothing\") "; 
-            break;
         case "Answer":
             jsString = "function(){//Answer: "+data + "\nreturn ";
             break;
         case "End Answer":
             jsString = "\n}";
             break;
-        case "Push Param":
+        case "Param":
             jsString = data;
             break;
-        case "Return Param":
+        case "Sub":
             jsString = data;
-            break;
-        case "Push Sub":
-            jsString = data;
-            break;
-        case "Return Sub":
-            jsString = data + ";";
             break;
         case "Data Structure":
             if (data == "1")
@@ -317,7 +308,7 @@ function JS_Compile(Data, ins, data, conversion, extras)
                 jsString += "\n}()";
             }
             break;
-        case "Return Data":
+        case "Element":
             //  If the conversions is a specification just return the data
             if (Data.Specifics[inputs_of(conversion)[0]])
             {
@@ -328,25 +319,16 @@ function JS_Compile(Data, ins, data, conversion, extras)
                 jsString = inputs_of(conversion)[0].replace(/'/g,"_") + "1==\"Nothing\"?\"Nothing\":" + inputs_of(conversion)[0].replace(/'/g,"_") + "1[" + data + "]";
             }
             break;
-        case "Push Number":
+        case "Number":
             jsString = data;
             break;
-        case "Return Number":
-            jsString = data + ";";
-            break;
-        case "Push Nothing":
+        case "Nothing":
             jsString = "\"Nothing\"";
             break;
-        case "Return Nothing":
-            jsString = "\"Nothing\";";
-            break;
-        case "Push Character":
+        case "Character":
             jsString = "\"" + data + "\"";
             break;
-        case "Return Character":
-            jsString = "\"" + data + "\"; ";
-            break;
-        case "Push Selector":
+        case "Selector":
             jsString = '"' + data + '"' + "\n";
             break;
     }

@@ -32,7 +32,7 @@ function DataStore()
     this.Passes = [
     
     function(Data, conversion, struc) { return build_structure(struc, 0); },
-    function(Data, conversion, struc) { return removeRedundantConversions(Data, struc); },
+    function(Data, conversion, struc) { return operateAST(Data, struc, undefined, removeRedundantConversions); },
     function(Data, conversion, struc) { return operateAST(Data, struc, undefined, JS_reorderAnswers, conversion); },
     function(Data, conversion, struc) { return operateAST(Data, struc, undefined, inlineConversion, conversion); },
     function(Data, conversion, struc) { return operateAST(Data, struc, undefined, JS_addEndConversion); },
@@ -453,11 +453,11 @@ function order_inputs(struc, conversion) {
 			if (struc instanceof Array) return output_of(struc[0].split(">")[1]);
 			else {
 				switch(struc.split(">")[0]) {
-					case "Push Param":
+					case "Param":
 						return inputs_of(conversion)[parseInt(struc.split(">")[1])];
-                    case "Push Number":
+                    case "Number":
                         return "Number";
-                    case "Push Character":
+                    case "Character":
                         return "Charachter";
 					default:
 						throw "ORder not implemented " + struc.split(">")[0];
@@ -510,11 +510,10 @@ function compile_generic(Data, struc, conversion, relocation) {
 		else { 
 			var split = struc[i].split('>');
 			switch(split[0]) {
-				case "Return Param":
-				case "Push Param":
+				case "Param":
 					nc.push(split[0] + ">" + relocation("Param", parseInt(split[1])));
 					break;
-				case "Return Data":
+				case "Element":
 					var dataType = inputs_of(conversion)[0];
 					if (dataType.indexOf("'") !== -1)
 					{
@@ -592,12 +591,11 @@ function compile_conversion(Data, conversion, bytecode)
 				if (!Data.Links[data]) Data.Links[data] = [];
 				Data.Links[data].push(conversion + ">" + i);
 				break;
-            case "Push Selector":
+            case "Selector":
                 var sel_type = selector_type(data);
                 if (!Data.Selectors[sel_type]) Data.Selectors[sel_type] = {};
                 Data.Selectors[sel_type][selector_select(data)] = true;
                 break;
-            case "Return Ask":
             case "Ask":
                 if (!Data.Asks[conversion]) Data.Asks[conversion] = {};
                 if (Data.Asks[conversion][data] === undefined)
