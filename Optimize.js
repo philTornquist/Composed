@@ -1,20 +1,3 @@
-
-function optimize(Data, conversion)
-{
-    var bc = Data.Conversions[conversion];
-    if (bc instanceof Function)
-    {
-        Data.Optimized[conversion] = bc; 
-        return;
-    }
-    
-    var s0 = build_structure(bc, 0);
-    var s1 = removeRedundantConversions(Data, s0);
-    var s2 = operateAST(Data, s1, undefined, JS_reorderAnswers, conversion);
-    
-    Data.Optimized[conversion] = s2;
-}
-
 function operateAST(Data, struc, component_funct, ast_funct, conversion, extras)
 {
     extras = extras ? extras : {};

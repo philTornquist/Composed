@@ -5,59 +5,6 @@ function js_conversion_rename(conversion) {
     return conversion.replace(/'/g,"_").replace(/,/g,"$").replace(/-/g,"_$_");
 }
 
-function JS_JITTER(Data, conversion)
-{
-    if (conversion === undefined)
-       return js_conversion_rename(Data);
-    
-    if (Data.Optimized[conversion] instanceof Function) {
-        return Data.Optimized[conversion];
-    }
-    
-    
-    log_js_compilation(["JS Compile: " + conversion]);
-    log_js_compilation(conversion);
-    
-    var s0 = Data.Optimized[conversion];
-    var s1 = operateAST(Data, s0, undefined, inlineConversion, conversion);
-    var s2 = operateAST(Data, s1, undefined, JS_addEndConversion);
-    var s3 = operateAST(Data, s2, undefined, JS_insertCommas);
-    var s4 = operateAST(Data, s3, undefined, JS_insertParamNames, conversion);
-    var s5 = operateAST(Data, s4, JS_Compile, undefined, conversion);
-    var bc = JS_collapse_structure(s5).join("");
-    var args = s4[1].split(">")[1];
-    
-    
-    log_js_compilation(["Bytecode"]);
-    log_js_compilation(Data.Conversions[conversion]);
-    log_js_compilation([]);
-    
-    log_js_compilation(["JS"]);
-    log_js_compilation(bc);
-    log_js_compilation([]);
-    log_js_compilation([]);
-
-    
-    document.getElementById("jsCode").value += "function " + conversion + "(" + args + ") {\n" + bc + "\n}\n\n";
-    
-    
-    var funct = new Function(args, bc);
-    if (log_js_execution == NLOG) return funct;
-    
-    return function() {
-        var args = [];
-        for (var i = 0; i < arguments.length; i++)
-            args.push(arguments[i]);
-        log_js_execution([conversion]);
-        log_js_execution("ARGUMENTS: " + args.toString() + "\n");
-        var res = funct.apply(this, arguments);
-        if (res === undefined) throw "error with result";
-        log_js_execution("Returns: " + res.toString() + " from " + args.toString());
-        log_js_execution([]);
-        return res;
-    };
-};
-
 function JS_collapse_structure(struc, nc)
 {
 	if (!nc) nc = [];
@@ -278,7 +225,7 @@ function JS_Compile(Data, ins, data, conversion, extras)
         case "Data Structure":
             if (data == "1")
             {
-                jsString = inputs_of(conversion)[0].replace(/'/g,"_") + "1;";
+                jsString = inputs_of(conversion)[0].replace(/'/g,"_") + "1";
             }
             else
             {

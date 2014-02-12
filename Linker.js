@@ -24,7 +24,7 @@ function DataStore()
     this.Passes           = [];
     this.PassCompiled     = [];
     
-    this.JIT              = function(){};
+    this.JITName          = function(a){return a;};
     this.JITed            = {};     //  Contains the JIT compiled calls
     
     
@@ -211,7 +211,7 @@ function link_conversions(Data)
             
             for (var conversion in Data.Conversions)
             {
-                if (Data.JITed[Data.JIT(conversion)] !== undefined)
+                if (Data.JITed[Data.JITName(conversion)] !== undefined)
                     continue;
                 
                 var bc = i >= 1 ? Data.PassCompiled[i-1][conversion] : Data.Conversions[conversion];
@@ -221,7 +221,7 @@ function link_conversions(Data)
         }
         
         for (var conversion in Data.PassCompiled[Data.PassCompiled.length-1])
-            Data.JITed[Data.JIT(conversion)] = Data.PassCompiled[Data.PassCompiled.length-1][conversion];
+            Data.JITed[Data.JITName(conversion)] = Data.PassCompiled[Data.PassCompiled.length-1][conversion];
         
         log_jitting([]);
     }
@@ -268,11 +268,11 @@ function accepts_selector(Data, conversion) {
             }
             
             newCall += ":" + selects.join(",");
-            var funct = Data.JITed[Data.JIT(newCall)];
+            var funct = Data.JITed[Data.JITName(newCall)];
             if (!funct) 
             {
                 create_conversion(Data, newCall);
-                funct = Data.JITed[Data.JIT(newCall)];
+                funct = Data.JITed[Data.JITName(newCall)];
             }
             return funct.apply(this, args);
         }
@@ -496,7 +496,9 @@ function order_inputs(struc, conversion) {
 	nc = [];
 
 	for (var i = 0; i < struc.length; i++) {
-		if (struc[i] instanceof Array) nc.push(order_inputs(struc[i], conversion));
+		if (struc[i] instanceof Array &&
+            struc[i][0] !== "ENTER>") 
+            nc.push(order_inputs(struc[i], conversion));
 		else nc.push(struc[i]);
 	}
 	return nc;
@@ -701,11 +703,11 @@ function print_conversions(Data)
 
 function CALL(Data, call) 
 {
-	var funct = Data.JITed[Data.JIT(call)];
+	var funct = Data.JITed[Data.JITName(call)];
     if (funct === undefined)
     {
       var ip = create_conversion(Data, call);
-      funct = Data.JITed[Data.JIT(call)];
+      funct = Data.JITed[Data.JITName(call)];
     }
 	if (funct === undefined)
 		throw "Conversion does not exist: " + call;

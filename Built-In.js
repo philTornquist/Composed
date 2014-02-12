@@ -4,6 +4,8 @@ function RESET() {
 Data = new DataStore();
 
 Data.DataStructures["Sum"] = "Sum,Number";
+Data.Conversions["Number,Sum"] = ["Conversion>Number,Sum","Param>0"];
+Data.Conversions["Sum,Number"] = ["Conversion>Sum,Number","Param>0"];
 Data.Conversions["Sum,Number,Number"] = [
     "Conversion>Sum,Number,Number",
     "ENTER>",
@@ -11,65 +13,70 @@ Data.Conversions["Sum,Number,Number"] = [
     "IGNORE> + ",
     "Param>1",
     "EXIT>"];
-/*Data.Conversions["Sum,Number,Number"] = function() {
-    return arguments[0] + arguments[1];
-}*/
-Data.Conversions["Number,Sum"] = function() {
-    return arguments[0];
-}
 
 Data.DataStructures["Difference"] = "Difference,Number";
-Data.Conversions["Difference,Number,Number"] = function() {
-    return arguments[0] - arguments[1];
-}
-Data.Conversions["Number,Difference"] = function() {
-    return arguments[0];
-}
-Data.Conversions["Difference,Number"] = function() {
-    return arguments[0];
-}
+Data.Conversions["Number,Difference"] = ["Conversion>Number,Difference", "Param>0"];
+Data.Conversions["Difference,Number"] = ["Conversion>Difference,Number", "Param>0"];
+Data.Conversions["Difference,Number,Number"] = [
+    "Conversion>Sum,Number,Number",
+    "ENTER>",
+    "Param>0",
+    "IGNORE> - ",
+    "Param>1",
+    "EXIT>"];
+    
 
 Data.DataStructures["Quotient"] = "Quotient,Number";
-Data.Conversions["Quotient,Number,Number"] = function() {
-    return arguments[0] / arguments[1];
-}
-Data.Conversions["Number,Quotient"] = function() {
-    return arguments[0];
-}
+Data.Conversions["Number,Quotient"] = ["Conversion>Number,Quotient", "Param>0"];
+Data.Conversions["Quotient,Number,Number"] = [
+    "Conversion>Sum,Number,Number",
+    "ENTER>",
+    "Param>0",
+    "IGNORE> / ",
+    "Param>1",
+    "EXIT>"];
 
 Data.DataStructures["Modulus"] = "Modulus,Number";
-Data.Conversions["Modulus,Number,Number"] = function() {
-    return arguments[0] % arguments[1];
-}
-Data.Conversions["Number,Modulus"] = function() {
-    return arguments[0];
-}
+Data.Conversions["Number,Modulus"] = ["Conversion>Number,Modulus", "Param>0"];
+Data.Conversions["Modulus,Number,Number"] = [
+    "Conversion>Sum,Number,Number",
+    "ENTER>",
+    "Param>0",
+    "IGNORE> % ",
+    "Param>1",
+    "EXIT>"];
 
 Data.DataStructures["Product"] = "Product,Number";
-Data.Conversions["Product,Number,Number"] = function() {
-    return arguments[0] * arguments[1];
-}
-Data.Conversions["Number,Product"] = function() {
-    return arguments[0];
-}
+Data.Conversions["Number,Product"] = ["Conversion>Number,Product", "Param>0"];
+Data.Conversions["Product,Number,Number"] = [
+    "Conversion>Sum,Number,Number",
+    "ENTER>",
+    "Param>0",
+    "IGNORE> * ",
+    "Param>1",
+    "EXIT>"];
 
 Data.TypeSpecification["Square"] = true;
 Data.DataStructures["Square"] = "Square,Number";
-Data.Conversions["Square,Number"] = function() {
-    return arguments[0] * arguments[0];
-}
-Data.Conversions["Number,Square"] = function() {
-    return arguments[0];
-}
+Data.Conversions["Number,Square"] = ["Conversion>Number,Square", "Param>0"];
+Data.Conversions["Square,Number"] = [
+    "Conversion>Sum,Number,Number",
+    "ENTER>",
+    "Param>0",
+    "IGNORE> * ",
+    "Param>0",
+    "EXIT>"];
 
 Data.TypeSpecification["SquareRoot"] = true;
 Data.DataStructures["SquareRoot"] = "SquareRoot,Number";
-Data.Conversions["SquareRoot,Number"] = function() {
-    return Math.sqrt(arguments[0]);
-}
-Data.Conversions["Number,SquareRoot"] = function() {
-    return arguments[0];
-}
+Data.Conversions["Number,SquareRoot"] = ["Conversion>Number,SquareRoot", "Param>0"];
+Data.Conversions["SquareRoot,Number"] = [
+    "Conversion>Sum,Number,Number",
+    "ENTER>",
+    "IGNORE>Math.sqrt(",
+    "Param>0",
+    "IGNORE>) ",
+    "EXIT>"];
 
 
 
@@ -86,18 +93,32 @@ Data.Asks["[A]Compare,Character,Character"] = {};
 Data.Asks["[A]Compare,Character,Character"]["less"] = 0;
 Data.Asks["[A]Compare,Character,Character"]["equal"] = 1;
 Data.Asks["[A]Compare,Character,Character"]["greater"] = 2;
-Data.Generics["[A]Compare,Character,Character"] = function(C1,C2,less,equal,greater)
-{
-    return C1 < C2 ? less.apply(this) : (C1 == C2 ? equal.apply(this) : greater.apply(this));
-}
+Data.Generics["[A]Compare,Character,Character"] = [
+    "Conversion>[A]Compare,Character,Character",
+    ["ENTER>",
+    "Param>0",
+    "IGNORE> < ",
+    "Param>1",
+    "IGNORE> ? ",
+    "Ask>less",
+    "IGNORE> : (",
+    "Param>0",
+    "IGNORE> == ",
+    "Param>1",
+    "IGNORE> ? ",
+    "Ask>equal",
+    "IGNORE> : ",
+    "Ask>greater",
+    "IGNORE>)",
+    "EXIT>"]];
 
 Data.Asks["[A]Compare,Number,Number"] = {};
 Data.Asks["[A]Compare,Number,Number"]["less"] = 0;
 Data.Asks["[A]Compare,Number,Number"]["equal"] = 1;
 Data.Asks["[A]Compare,Number,Number"]["greater"] = 2;
-/*Data.Generics["[A]Compare,Number,Number"] = [
+Data.Generics["[A]Compare,Number,Number"] = [
     "Conversion>[A]Compare,Number,Number",
-    "ENTER>",
+    ["ENTER>",
     "Param>0",
     "IGNORE> < ",
     "Param>1",
@@ -108,14 +129,15 @@ Data.Asks["[A]Compare,Number,Number"]["greater"] = 2;
     "IGNORE> === ",
     "Param>1",
     "IGNORE> ? ",
-    "Ask>equal:,
+    "Ask>equal",
     "IGNORE> : ",
     "Ask>greater",
-    "EXIT>"];*/
-Data.Generics["[A]Compare,Number,Number"] = function(N1,N2,less,equal,greater) 
+    "IGNORE>)",
+    "EXIT>"]];
+/*Data.Generics["[A]Compare,Number,Number"] = function(N1,N2,less,equal,greater) 
 {
     return N1 < N2 ? less.apply(this) : (N1 == N2 ? equal.apply(this) : greater.apply(this));
-}
+}*/
 
 Data.Asks["[B]Exists,[A]"] = {};
 Data.Asks["[B]Exists,[A]"]["yes"] = 0;

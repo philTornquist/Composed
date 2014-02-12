@@ -21,7 +21,7 @@ function Test_JSCompiler()
     LOG(["TEST!!! JSCompiler"]);
     
     RESET();
-    Data.JIT = JS_JITTER;
+    Data.JITName = js_conversion_rename;
     
         var SAVED = log_compiler_conversions;
         log_compiler_conversions = log_compiler ? LOG : NLOG;
@@ -103,7 +103,7 @@ function Test_JSCompiler()
     function std(l){var m=0;for(var i=0;i<l.length;i++)m+=l[i];m/=i;var n=[];for(i=0;i<l.length;i++)n.push((l[i]-m)*(l[i]-m));var s=0;for(i=0;i<n.length;i++)s+=n[i];return Math.sqrt(s/(l.length-1));}
 
     
-    /*check(  23,                                   "X,Y",                                                    [3]);
+    check(  23,                                   "X,Y",                                                    [3]);
     check(  [1,2],                                "Point2D,-Type,Number,Number",                             ["Type-Selector",1,2]);
     check(  [1,20],                               "Point2D,-Type,Number",                                    ["Type-Selector",1]);
     check(  [5,23],                               "Point2D,Number",                                         [5]);
@@ -119,7 +119,7 @@ function Test_JSCompiler()
     check(  ["Nothing",5],                        "List'Number',List'Number',Number",                       ["Nothing",5]);
     check(  ["Nothing",17],                       "List'Number',List'Number',Number,Number,X",              ["Nothing", 17, 12, [5]]);
     check(  make_list([1,2], 'L'),                "List'Number',Number,Number",                             [1,2]);
-    */check(  10,                                   "Foldr'Sum',List'Number',Sum",                            [make_list([1,2,3,4], 'L'),0]);
+    check(  10,                                   "Foldr'Sum',List'Number',Sum",                            [make_list([1,2,3,4], 'L'),0]);
     check(  10,                                   "Foldl'Sum',List'Number',Sum",                            [make_list([1,2,3,4], 'L'),0]);
     check(  make_list([[1,1],[2,2]], 'L'),        "Map'Vector2D',List'Number'",                             [make_list([1,2], 'L')]);
     check(  make_list([1,2], 'R'),                "Filter'IsLessThan5',List'Number'",                       [make_list(["Nothing",1,"Nothing",2,"Nothing"], 'L')]);
