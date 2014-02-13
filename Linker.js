@@ -33,6 +33,7 @@ function DataStore()
     
     function(Data, conversion, struc) { return build_structure(struc, 0); },
     function(Data, conversion, struc) { return operateAST(Data, struc, undefined, removeRedundantConversions); },
+    function(Data, conversion, struc) { return operateAST(Data, struc, undefined, JS_expandElement, conversion); },
     function(Data, conversion, struc) { return operateAST(Data, struc, undefined, JS_reorderAnswers, conversion); },
     function(Data, conversion, struc) { return operateAST(Data, struc, undefined, inlineConversion, conversion); },
     function(Data, conversion, struc) { return operateAST(Data, struc, undefined, JS_addEndConversion); },
@@ -45,21 +46,7 @@ function DataStore()
     
         document.getElementById("jsCode").value += "function " + conversion + "(" + args + ") {\n" + bc + "\n}\n\n";
         
-        var funct = new Function(args, bc);
-        if (log_js_execution == NLOG) return funct;
-        
-        return function() {
-            var args = [];
-            for (var i = 0; i < arguments.length; i++)
-                args.push(arguments[i]);
-            log_js_execution([conversion]);
-            log_js_execution("ARGUMENTS: " + args.toString() + "\n");
-            var res = funct.apply(this, arguments);
-            if (res === undefined) throw "error with result";
-            log_js_execution("Returns: " + res.toString() + " from " + args.toString());
-            log_js_execution([]);
-            return res;
-        };
+        return new Function(args+",$evaluation$", bc);
     } ];
 }
 
@@ -512,6 +499,9 @@ function compile_generic(Data, struc, conversion, relocation) {
 		else { 
 			var split = struc[i].split('>');
 			switch(split[0]) {
+                case "Conversion":
+                    nc.push(split[0] + ">" + conversion);
+                    break;
 				case "Param":
 					nc.push(split[0] + ">" + relocation("Param", parseInt(split[1])));
 					break;

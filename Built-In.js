@@ -9,73 +9,85 @@ Data.Conversions["Sum,Number"] = ["Conversion>Sum,Number","Param>0"];
 Data.Conversions["Sum,Number,Number"] = [
     "Conversion>Sum,Number,Number",
     "ENTER>",
+    "IGNORE>(",
     "Param>0",
     "IGNORE> + ",
     "Param>1",
+    "IGNORE>)",
     "EXIT>"];
 
 Data.DataStructures["Difference"] = "Difference,Number";
 Data.Conversions["Number,Difference"] = ["Conversion>Number,Difference", "Param>0"];
 Data.Conversions["Difference,Number"] = ["Conversion>Difference,Number", "Param>0"];
 Data.Conversions["Difference,Number,Number"] = [
-    "Conversion>Sum,Number,Number",
+    "Conversion>Difference,Number,Number",
     "ENTER>",
+    "IGNORE>(",
     "Param>0",
     "IGNORE> - ",
     "Param>1",
+    "IGNORE>)",
     "EXIT>"];
     
 
 Data.DataStructures["Quotient"] = "Quotient,Number";
 Data.Conversions["Number,Quotient"] = ["Conversion>Number,Quotient", "Param>0"];
 Data.Conversions["Quotient,Number,Number"] = [
-    "Conversion>Sum,Number,Number",
+    "Conversion>Quotient,Number,Number",
     "ENTER>",
+    "IGNORE>(",
     "Param>0",
     "IGNORE> / ",
     "Param>1",
+    "IGNORE>)",
     "EXIT>"];
 
 Data.DataStructures["Modulus"] = "Modulus,Number";
 Data.Conversions["Number,Modulus"] = ["Conversion>Number,Modulus", "Param>0"];
 Data.Conversions["Modulus,Number,Number"] = [
-    "Conversion>Sum,Number,Number",
+    "Conversion>Modulus,Number,Number",
     "ENTER>",
+    "IGNORE>(",
     "Param>0",
     "IGNORE> % ",
     "Param>1",
+    "IGNORE>)",
     "EXIT>"];
 
 Data.DataStructures["Product"] = "Product,Number";
 Data.Conversions["Number,Product"] = ["Conversion>Number,Product", "Param>0"];
 Data.Conversions["Product,Number,Number"] = [
-    "Conversion>Sum,Number,Number",
+    "Conversion>Product,Number,Number",
     "ENTER>",
+    "IGNORE>(",
     "Param>0",
     "IGNORE> * ",
     "Param>1",
+    "IGNORE>)",
     "EXIT>"];
 
 Data.TypeSpecification["Square"] = true;
 Data.DataStructures["Square"] = "Square,Number";
 Data.Conversions["Number,Square"] = ["Conversion>Number,Square", "Param>0"];
 Data.Conversions["Square,Number"] = [
-    "Conversion>Sum,Number,Number",
+    "Conversion>Square,Number",
     "ENTER>",
+    "IGNORE>(",
     "Param>0",
     "IGNORE> * ",
     "Param>0",
+    "IGNORE>)",
     "EXIT>"];
 
 Data.TypeSpecification["SquareRoot"] = true;
 Data.DataStructures["SquareRoot"] = "SquareRoot,Number";
 Data.Conversions["Number,SquareRoot"] = ["Conversion>Number,SquareRoot", "Param>0"];
 Data.Conversions["SquareRoot,Number"] = [
-    "Conversion>Sum,Number,Number",
+    "Conversion>SquareRoot,Number",
     "ENTER>",
     "IGNORE>Math.sqrt(",
     "Param>0",
-    "IGNORE>) ",
+    "IGNORE>)",
     "EXIT>"];
 
 

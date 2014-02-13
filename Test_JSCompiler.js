@@ -85,8 +85,10 @@ function Test_JSCompiler()
     var results = [];
     function check(result, conv, params) {
         
+        params.push([]);
         var funct = CALL(Data, conv);
         var test = funct.apply(Data.JITed, params);
+        console.log(params.pop());
         test = test ? test : "Nothing";
         if ("" + result === "" + test) LOG("Test Passed! " + result + " = " + conv + params);
         else { failed++;

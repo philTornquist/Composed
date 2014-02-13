@@ -177,6 +177,33 @@ function JS_insertCommas(Data, struc)
     return nc;
 }
 
+function JS_expandElement(Data, struc)
+{
+    if (!(struc[1] instanceof Array) &&
+        struc[1].split(">")[0] === "Element")
+    {
+        var clone = [];
+        for (var i = 0; i < struc.length; i++)
+            clone.push(struc[i]);
+            
+        
+        if (Data.Specifics[inputs_of(struc[0].split(">")[1])[0]])
+        {
+            clone[1] = "Param>0";
+        }
+        else
+        {
+            clone[1] = ["IGNORE>function(r){return r==\"Nothing\"?\"Nothing\":",
+                        "IGNORE>r["+struc[1].split(">")[1] + "]",
+                        "IGNORE>}(",
+                        "Param>0",
+                        "IGNORE>)"];
+        }
+        return clone;
+    }
+    return struc;
+}
+
 function JS_Compile(Data, ins, data, conversion, extras)
 {
     var jsString = "";
@@ -184,16 +211,35 @@ function JS_Compile(Data, ins, data, conversion, extras)
     switch (ins) {
         case "Conversion":
             //jsString = "this.$"+data+"=function(";
+            
+            /* DATA LOG
+            jsString  = "var $myeval$ = [];\n";
+            jsString += "$evaluation$.push($myeval$);\n";
+            jsString += "$myeval$['_CONVERSION'] = \"" + conversion + "\";\n";
+            */
             break;
         case "Arguments":
             //jsString = data + ") { \n ";
+            
+            /* DATA LOG
+            jsString = "$myeval$['_ARGUMENTS'] = [" + data + "];\n";
+            */
             break;
         case "Return":
             jsString = "return ";
+            
+            /* DATA LOG
+            jsString = "$myeval$['_RESULT'] = ";
+            */
             break
         case "End Conversion":
             //jsString = ";\n}";
-            jsString = ";";
+            
+            /* DATA LOG
+            jsString = ";\nreturn $myeval$['_RESULT']";
+            */
+            
+            jsString += ";";
             break;
         case "SubConversion":
             jsString = "var " + data + " = ";
@@ -205,6 +251,9 @@ function JS_Compile(Data, ins, data, conversion, extras)
             jsString = "this." + js_conversion_rename(data) + "(\n";
             break;    
         case "Call":
+            /* DATA LOG
+            jsString = "\n,$myeval$\n)";
+            */
             jsString = "\n)";
             break;
         case "Ask":
@@ -257,14 +306,15 @@ function JS_Compile(Data, ins, data, conversion, extras)
             break;
         case "Element":
             //  If the conversions is a specification just return the data
-            if (Data.Specifics[inputs_of(conversion)[0]])
+            
+            /*if (Data.Specifics[inputs_of(conversion)[0]])
             {
                jsString = inputs_of(conversion)[0].replace(/'/g,"_") + "1";
             }
             else
             {
                 jsString = inputs_of(conversion)[0].replace(/'/g,"_") + "1==\"Nothing\"?\"Nothing\":" + inputs_of(conversion)[0].replace(/'/g,"_") + "1[" + data + "]";
-            }
+            }*/
             break;
         case "Number":
             jsString = data;

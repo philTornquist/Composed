@@ -59,6 +59,8 @@ function removeRedundantConversions(Data, struc) {
                     return struc[1];
                 if (Data.DataStructures[inputs_of(data)[0]] == inputs_of(data)[0]+","+output_of(data) && !Data.TypeSpecification[inputs_of(data)[0]])
                     return struc[1];
+                if (inputs_of(data)[0] === "Nothing")
+                    return "Nothing>";
             }
         }
     }
@@ -82,7 +84,7 @@ function inlineConversion(Data, struc, conversion)
 
         var lookupConversion = Data.PassCompiled[Data.CurrentPass-1][inlineConversion];
         if (lookupConversion instanceof Function) return struc;
-        //if (lookupConversion.length > 10) return struc;
+        
         //  Contains selector type
         if (inputs_of(inlineConversion)[0][0] == "-") return struc;
         
@@ -90,8 +92,6 @@ function inlineConversion(Data, struc, conversion)
         if (bcStruc === undefined) 
             return struc;
         if (!(bcStruc[1] instanceof Array)) return struc;
-        
-        LOG("Inlining: " + inlineConversion + " into: " + conversion);
         
         var inlineBC = [];
         for (var i = 1; i < bcStruc.length; i++)
