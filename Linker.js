@@ -7,12 +7,10 @@ function DataStore()
 	this.Generics         = {};     //  Mapping of generic conversions to their bytecode structure
 	this.Conversions      = {};     //  Mapping of conversions to its bytecode
     
-    
-    this.Recursive        = {};     //  Mapping of conversions that are recursive
-	this.DataStructures   = {};     //  Contains all types that are Data Structures
-    this.TypeSpecification= {};
+    this.Hints            = {};
+    this.Specifics        = {};
+    this.Types            = {};
     this.Selectors        = {};     //  Mapping of selelctor types to an array of possible selectors
-    this.Specifics        = {};     //  Contains all types that are specific types
     this.Asks             = {};     //  Contains all asks of each conversion
     this.SubConversions   = {};     //  Contains array of subconversion names
     
@@ -28,8 +26,17 @@ function DataStore()
     this.JITed            = {};     //  Contains the JIT compiled calls
     
     
-    
     this.Passes = [
+        remove_redundant_conversions,
+        reorder_answers,
+        JS_expand_element,
+        JS_insert_end_tags,
+        JS_insert_param_names,
+        JS_insert_commas,
+        JS_compile
+        
+    ];
+    /*this.Passes = [
     
     function(Data, conversion, struc) { return build_structure(struc, 0); },
     function(Data, conversion, struc) { return operateAST(Data, struc, undefined, removeRedundantConversions); },
@@ -47,7 +54,7 @@ function DataStore()
         document.getElementById("jsCode").value += "function " + conversion + "(" + args + ") {\n" + bc + "\n}\n\n";
         
         return new Function(args+",$evaluation$", bc);
-    } ];
+    } ];*/
 }
 
 function load_bytecode(Data, bytecode)
@@ -63,9 +70,10 @@ function load_bytecode(Data, bytecode)
         var data = bytecode[i].split(">")[1];
         switch(ins)
         {
+            case "Specification":
             case "Conversion":
                 if (name !== "")
-                    load_conversion(Data, name, code.join('\n'));
+                    load_conversion(Data, name, code);
                 name = data;
                 code = [bytecode[i]];
                 break;
@@ -80,31 +88,31 @@ function load_bytecode(Data, bytecode)
     }
     
     if (name !== "")
-        load_conversion(Data, name, code.join('\n'));
+        load_conversion(Data, name, code);
 }
 
 //  Loads conversion into Linker
 function load_conversion(Data, conversion, bytecode)
 {
     //  Split into bytecode instructions
-	bytecode = bytecode.split("\n");
+	if (!(bytecode instanceof Array)) bytecode = bytecode.split("\n");
 
     //  Conversion is generic
 	if (is_generic(conversion)) 
 	{
         //  Change array of bytecode instructions into its structure
-		Data.Generics[conversion] = build_structure(bytecode);
+		Data.Generics[conversion] = bytecode;
 
         //  If  the conversion is to build a data structure
         //    Then add is to the list of data structure types
 		if (bytecode[1].split(">")[0] == "Data Structure")
         {
-			Data.DataStructures[generic_type(output_of(conversion))] = conversion;
+			Data.Types[generic_type(output_of(conversion))] = conversion;
             if (bytecode[1].split(">")[1] == "1")
                 Data.Specifics[generic_type(output_of(conversion))] = true;
         }
         else if (bytecode[1].split(">")[0] == "Specification") {
-            Data.DataStructures[generic_type(output_of(conversion))] = conversion;
+            Data.Types[generic_type(output_of(conversion))] = conversion;
             Data.Specifics[generic_type(output_of(conversion))] = true;
         }
 	}
@@ -166,7 +174,7 @@ function link_conversions(Data)
                         Data.Conversions[conversion] = funct;
                     else
                     {
-                        var bytecode = build_conversion(Data, conversion, Data.Generics[generic], relocation);
+                        var bytecode = build_conversion(Data, conversion, relocation, Data.Generics[generic], 0);
                         Data.Conversions[conversion] = compile_conversion(Data, conversion, bytecode);
                     }
                 }
@@ -190,6 +198,8 @@ function link_conversions(Data)
     {
         log_jitting(["JITTING"]);
         
+        document.getElementById("bytecode").value = "";
+        
         for (var i = 0; i < Data.Passes.length; i++)
         {
             var pass = Data.Passes[i];
@@ -203,9 +213,13 @@ function link_conversions(Data)
                 
                 var bc = i >= 1 ? Data.PassCompiled[i-1][conversion] : Data.Conversions[conversion];
             
-                Data.PassCompiled[i][conversion] = (bc instanceof Function) ? bc : pass(Data, conversion, bc);
+                Data.PassCompiled[i][conversion] = (bc instanceof Function) ? bc : pass(Data, conversion, bc, 0);
             }
         }
+        
+        for (var conversion in Data.PassCompiled[1])
+            if (!( Data.PassCompiled[1][conversion] instanceof Function))
+            document.getElementById("bytecode").value += Data.PassCompiled[1][conversion].join("\n") + "\n\n";
         
         for (var conversion in Data.PassCompiled[Data.PassCompiled.length-1])
             Data.JITed[Data.JITName(conversion)] = Data.PassCompiled[Data.PassCompiled.length-1][conversion];
@@ -409,149 +423,166 @@ function type_match(gen_type, conv_type, genericName_MAP_type) {
 	}
 }
 
-function build_conversion(Data, conversion, struc, relocation)
+function build_conversion(Data, conversion, relocation, bytecode, i)
 {
     log_linker_restructure(["Restructure"]);
 
-    log_linker_restructure(["GENERIC: " + relocation("Generic")])
-	print_structure(struc);
+    log_linker_restructure(["GENERIC: " + relocation("Generic")]);
+	log_linker_restructure(bytecode.join('\n'));
 
     log_linker_restructure(["RELOCATION"]);
     log_linker_restructure(relocation(".PRINT"));
     log_linker_restructure([]);
 
-	struc = compile_generic(Data, struc, conversion, relocation);	
-	struc = order_inputs(struc, conversion);
+	bytecode = compile_generic(Data, conversion, relocation, bytecode, i);	
+	bytecode = order_inputs(conversion, bytecode, i);
+    
     log_linker_restructure([]);
     log_linker_restructure(["CONVERSION: " + conversion]);
-	print_structure(struc);
+	log_linker_restructure(bytecode.join('\n'));
     log_linker_restructure([]);
 
     log_linker_restructure([]);
 
-	return collapse_structure(struc);
+	return bytecode;
 }
 
-function order_inputs(struc, conversion) {
+function order_inputs(conversion, bytecode, i) {
 	var nc = [];
 
 	var compare = function(a,b) {
-		var type = function(struc) {
-			if (struc instanceof Array) return output_of(struc[0].split(">")[1]);
+		var type = function(bytecode) {
+			if (bytecode.length > 1) return output_of(bytecode[0].split(">")[1]);
 			else {
-				switch(struc.split(">")[0]) {
+				switch(BCins(bytecode[0])) {
 					case "Param":
-						return inputs_of(conversion)[parseInt(struc.split(">")[1])];
+						return inputs_of(conversion)[parseInt(BCdata(bytecode[0]))];
                     case "Number":
                         return "Number";
                     case "Character":
                         return "Charachter";
 					default:
-						throw "ORder not implemented " + struc.split(">")[0];
+						throw "ORder not implemented " + BCins(bytecode[0]);
 				}
 			}
 		}
 		return type(a) < type(b);	
 	}
 
-	//  THE FOLLOWING NEEDS REWORKING
-	if (struc.length > 2) {
-		var i = 1;
-		var save = [];
-		if ( !(struc[i] instanceof Array) && struc[i].split(">")[0] == "Answer") {
-			for(; i < struc.length - 1; i++) {
-				save.push(struc[i]);
-				if ( !(struc[i] instanceof Array) && struc[i].split(">")[0] == "End Answers")
-					break;
-			}
-			i++;
-		}
-		for (; i < struc.length - 1; i++) {
-			if (struc[i].length == 0) continue;
-			nc.addInOrder(struc[i], compare);
-		}
-		for (var i = save.length - 1; i >= 0; i--)
-			nc.unshift(save[i]);
-		nc.unshift(struc[0]);
-		nc.push(struc[struc.length - 1]);
-	}
-	else {
-		for (var i = 0; i < struc.length; i++) nc.push(struc[i]);	
-	}
-
-	struc = nc;
-	nc = [];
-
-	for (var i = 0; i < struc.length; i++) {
-		if (struc[i] instanceof Array &&
-            struc[i][0] !== "ENTER>") 
-            nc.push(order_inputs(struc[i], conversion));
-		else nc.push(struc[i]);
-	}
+    for (; i < bytecode.length; i++)
+    {
+        switch(BCins(bytecode[i]))
+        {
+            case "Enter":
+            /*
+                var inputs = [];
+                do
+                {
+                    var inp = value_at(bytecode, i+1);
+                    inp = order_inputs(conversion, inp, 0);
+                    inputs.addInOrder(inp, compare);
+                    i += inp.length;
+                } while(BCins(bytecode[i+1]) !== "Call");*/
+                var counter = {};
+                var inputs = [];
+                var answers = [];
+                var code = forall_inputs(bytecode, i, function(bc, i) { 
+                    inputs.addInOrder(order_inputs(conversion, bc, i), compare); 
+                },
+                function(bc, i, answer) { 
+                    var nc = order_inputs(conversion, bc, i);
+                    nc.unshift("Answer>"+answer); 
+                    answers.push(nc); 
+                    return [];
+                }, counter);
+            
+                /*for (var j = 0; j < inputs.length; j++)
+                    for (var k = 0; k < inputs[j].length; k++)
+                        nc.push(inputs[j][k]);*/
+                nc.push(code[0]);
+                for(var j = 0; j < inputs.length; j++)
+                    for (var k = 0; k < inputs[j].length; k++)
+                        nc.push(inputs[j][k]);
+                
+                for(var j = 0; j < answers.length; j++)
+                    for (var k = 0; k < answers[j].length; k++)
+                        nc.push(answers[j][k]);
+                nc.push(code[code.length-1]);
+                    
+                i += counter.value;
+                    
+                break;
+            case "SubConversion":
+                var code = value_at(bytecode, i+1);
+                code = order_inputs(conversion, code, 0);
+                nc.push(bytecode[i]);
+                for (var j = 0; j < code.length; j++) nc.push(code[j]);
+                i += code.length;
+                break;
+            default:
+                nc.push(bytecode[i]);
+                break;
+        }
+    }
 	return nc;
 }
 
-function compile_generic(Data, struc, conversion, relocation) {
+function compile_generic(Data, conversion, relocation, bytecode, i) {
 	var nc = [];
-	for (var i = 0; i < struc.length; i++) {
-		if (struc[i] instanceof Array) nc.push(compile_generic(Data, struc[i], conversion, relocation));
-		
-		else { 
-			var split = struc[i].split('>');
-			switch(split[0]) {
-                case "Conversion":
-                    nc.push(split[0] + ">" + conversion);
-                    break;
-				case "Param":
-					nc.push(split[0] + ">" + relocation("Param", parseInt(split[1])));
-					break;
-				case "Element":
-					var dataType = inputs_of(conversion)[0];
-					if (dataType.indexOf("'") !== -1)
-					{
-						var dataGenVar = dataType.substring(dataType.indexOf("'") + 1, dataType.length - 1);
-						dataType = dataType.substring(0, dataType.indexOf("'"));
-					}
-					var dataConversion = Data.DataStructures[dataType];
+	for (; i < bytecode.length; i++) {
+	    switch(BCins(bytecode[i])) {
+            case "Conversion":
+                nc.push(BCins(bytecode[i]) + ">" + conversion);
+                break;
+			case "Param":
+				nc.push("Param>" + relocation("Param", parseInt(BCdata(bytecode[i]))));
+				break;
+			case "Element":
+				var dataType = inputs_of(conversion)[0];
+				if (dataType.indexOf("'") !== -1)
+				{
+					var dataGenVar = dataType.substring(dataType.indexOf("'") + 1, dataType.length - 1);
+					dataType = dataType.substring(0, dataType.indexOf("'"));
+				}
+				var dataConversion = Data.Types[dataType];
+				
+				if (dataGenVar)
+				{
+					var relocation = function() { return dataGenVar; }
+					var oInputs = inputs_of(dataConversion);
+					var dInputs = [];
+					dataConversion = replace_generic(output_of(dataConversion), relocation);
+					for (var j = 0; j < oInputs.length; j++)
+						dInputs.addInOrder(replace_generic(oInputs[j], relocation));
+				}
+				else
+					dInputs = inputs_of(dataConversion);
+				
+				for (var j = 0; j < dInputs.length; j++)
+					if (dInputs[j] === output_of(conversion))
+						nc.push("Element>" + j);
+				break;
+			case "Enter":
+			case "Call":
+				if (BCdata(bytecode[i]).indexOf('[') !== -1) { 
+					var inputs = inputs_of(BCdata(bytecode[i]));
+					var nInputs = [];
 					
-					if (dataGenVar)
-					{
-						var relocation = function() { return dataGenVar; }
-						var oInputs = inputs_of(dataConversion);
-						var dInputs = [];
-						dataConversion = replace_generic(output_of(dataConversion), relocation);
-						for (var i = 0; i < oInputs.length; i++)
-							dInputs.addInOrder(replace_generic(oInputs[i], relocation));
-					}
-					else
-						dInputs = inputs_of(dataConversion);
-					
-					for (var i = 0; i < dInputs.length; i++)
-						if (dInputs[i] === output_of(conversion))
-							nc.push(split[0] + ">" + i);
-					break;
-				case "Enter":
-				case "Call":
-					if (split[1].indexOf('[') !== -1) { 
-						var inputs = inputs_of(split[1]);
-						var nInputs = [];
-						
-						for (var j = 0; j < inputs.length; j++) 
-							nInputs.addInOrder(replace_generic(inputs[j], relocation));
+					for (var j = 0; j < inputs.length; j++) 
+						nInputs.addInOrder(replace_generic(inputs[j], relocation));
 	
-						var newConv = replace_generic(output_of(split[1]), relocation);
-						for (var j = 0; j < nInputs.length; j++) newConv += "," + nInputs[j];
-						nc.push(split[0] + ">" + newConv);
-					}
-                    else
-                    {
-                        nc.push(struc[i]);
-                    }
-					break;
-				default:
-					nc.push(struc[i]);
-					break;
-			}
+					var newConv = replace_generic(output_of(BCdata(bytecode[i])), relocation);
+					for (var j = 0; j < nInputs.length; j++) newConv += "," + nInputs[j];
+					nc.push(BCins(bytecode[i]) + ">" + newConv);
+				}
+                else
+                {
+                    nc.push(bytecode[i]);
+                }
+				break;
+			default:
+				nc.push(bytecode[i]);
+				break;
 		}
 	}
 	return nc;
@@ -560,7 +591,8 @@ function compile_generic(Data, struc, conversion, relocation) {
 //  Returns pointer to start of conversion in code section
 function compile_conversion(Data, conversion, bytecode)
 {
-
+    Data.Hints[conversion] = {};
+    
     var selectors = selectors_of(conversion);
     for (var i = 0; i < selectors.length; i++)
     {
@@ -578,7 +610,7 @@ function compile_conversion(Data, conversion, bytecode)
 		switch(ins)
 		{
 			case "Enter":
-                if (data === conversion) Data.Recursive[data] = true;
+                if (data === conversion) Data.Hints[data].Recursive = true;
                 if (Data.Conversions[data] === undefined) Data.Missing[data] = true;
 				if (!Data.Links[data]) Data.Links[data] = [];
 				Data.Links[data].push(conversion + ">" + i);
@@ -600,61 +632,14 @@ function compile_conversion(Data, conversion, bytecode)
 		}	
 	}	
 	if (bytecode[1].split(">")[0] == "Data Structure" ||
-        bytecode[1].split(">")[0] == "Specification") 
+        bytecode[0].split(">")[0] == "Specification") 
     {
-        Data.DataStructures[output_of(conversion)] = conversion;
-        if (bytecode[1].split(">")[1] == "1")
+        Data.Types[output_of(conversion)] = conversion;
+        if (bytecode[0].split(">")[0] == "Specification")
             Data.Specifics[output_of(conversion)] = true;
     }
     
     return bytecode;
-}
-
-function build_structure(bytecode, i)
-{
-	var inputs = [];
-	if (!i) i = 0;
-	for (; i < bytecode.length; i++) {
-		var ins = bytecode[i].split(">")[0];
-		var data = bytecode[i].split(">")[1];
-		switch(ins) {
-			case "Enter":
-            case "ENTER":
-				var subcall = build_structure(bytecode, i+1);
-				subcall[1].unshift(bytecode[i]);
-				inputs.push(subcall[1]);
-				i = subcall[0];
-				break;
-			case "Call":
-            case "EXIT":
-				inputs.push(bytecode[i]);
-				return [i, inputs];
-				break;
-			default:
-                inputs.push(bytecode[i]);
-				break;
-		}
-	}
-	return inputs;
-}
-
-function collapse_structure(struc, nc)
-{
-	if (!nc) nc = [];
-	for (var i = 0; i < struc.length; i++) {
-		if (struc[i] instanceof Array) collapse_structure(struc[i], nc);
-		else nc.push(struc[i]);
-	}
-	return nc;
-}
-
-function print_structure(struc, tab) {
-	if (!tab) tab = "";
-	for (var i = 0; i < struc.length; i++) {
-		if (struc[i] instanceof Array) print_structure(struc[i], tab + "  ");
-		else
-			log_linker_restructure(tab + struc[i]);
-	}
 }
 
 

@@ -157,6 +157,161 @@ Factorial is Number:
                  ] > Product > Number
     }
 </textarea>
+<textarea id="inputBytecode" rows=50 cols=100>
+Conversion>Number,Sum
+Element>0
+
+Conversion>Sum,Number
+Data Structure>1
+
+Conversion>Sum,Number,Number
+ENTER>
+IGNORE>(
+Param>0
+IGNORE> + 
+Param>1
+IGNORE>)
+EXIT>
+
+Conversion>Number,Difference
+Element>0
+
+Conversion>Difference,Number
+Data Structure>0
+
+Conversion>Difference,Number,Number
+ENTER>
+IGNORE>(
+Param>0
+IGNORE> - 
+Param>1
+IGNORE>)
+EXIT>
+
+Conversion>Quotient,Number
+Data Structure>1
+
+Conversion>Number,Quotient
+Param>0
+
+Conversion>Quotient,Number,Number
+ENTER>
+IGNORE>(
+Param>0
+IGNORE> / 
+Param>1
+IGNORE>)
+EXIT>
+
+Conversion>Number,Modulus
+Param>0
+
+Conversion>Modulus,Number,Number
+ENTER>
+IGNORE>(
+Param>0
+IGNORE> % 
+Param>1
+IGNORE>)
+EXIT>
+
+Conversion>Number,Product
+Param>0
+
+Conversion>Product,Number,Number
+ENTER>
+IGNORE>(
+Param>0
+IGNORE> * 
+Param>1
+IGNORE>)
+EXIT>
+
+Conversion>Number,Square
+Param>0
+
+Specification>Square,Number
+ENTER>
+IGNORE>(
+Param>0
+IGNORE> * 
+Param>0
+IGNORE>)
+EXIT>
+
+Conversion>Number,SquareRoot
+Param>0
+
+Specification>SquareRoot,Number
+ENTER>
+IGNORE>Math.sqrt(
+Param>0
+IGNORE>)
+EXIT>
+
+
+
+Conversion>[A],Nothing
+Nothing>
+
+
+Conversion>[A]Compare,[A]
+Data Structure>1
+
+Conversion>[A],[A]Compare
+Param>0
+
+Conversion>[A]Compare,Character,Character
+ENTER
+Param>0
+IGNORE> < 
+Param>1
+IGNORE> ? 
+Ask>less
+IGNORE> : (
+Param>0
+IGNORE> == 
+Param>1
+IGNORE> ? 
+Ask>equal
+IGNORE> : 
+Ask>greater
+IGNORE>)
+EXIT>
+
+Conversion>[A]Compare,Number,Number
+ENTER>
+Param>0
+IGNORE> < 
+Param>1
+IGNORE> ? 
+Ask>less
+IGNORE> : (
+Param>0
+IGNORE> == 
+Param>1
+IGNORE> ? 
+Ask>equal
+IGNORE> : 
+Ask>greater
+IGNORE>)
+EXIT>
+
+
+Specification>[B]Exists,[A]
+ENTER>
+IGNORE>(
+Param>0
+IGNORE> !== "Nothing" ? 
+Ask>yes
+IGNORE> : 
+Ask>no
+IGNORE>)
+EXIT>
+
+Conversion>[A],[A]Exists
+Param>0
+</textarea>
 <textarea id="bytecode" rows=50 cols=100></textarea>
 <textarea id="jsCode" rows=50 cols=100></textarea>
     </div>
@@ -167,12 +322,12 @@ Factorial is Number:
 
     <script src="LogHistory.js"></script>
     <script src="ConversionUtils.js"></script>
+    <script src="Bytecode.js"></script>
 
     <script src="Compiler.js"></script>
     <script src="Optimize.js"></script>
 
     <script src="Linker.js"></script>
-    <script src="Built-In.js"></script>
     <script src="Interpreter.js"></script>
 
     <script src="Test_Interpreter.cps.js"></script>
@@ -186,6 +341,25 @@ Factorial is Number:
 <script>
     window.onload = function()
     {
+    
+    
+        var code = [
+                "Conversion>[A],[B]List,Apple",
+                "Hint>Stuff",
+                "SubConversion>a",
+                "Enter>Sum,Number,[B]",
+                "Number>4",
+                "Param>0",
+                "Call>Sum,Number,[B]",
+                "Enter>[A],Test",
+                "Param>0",
+                "Call>[A],Test"
+                ];
+                
+        var relocation = generic_match("Number,Apple,List'ANumber'", "[A],[B]List,Apple");
+        var built = build_conversion(new DataStore(), "Number,Apple,List'ANumber'", relocation, code, 0);
+    
+    
         document.getElementById("code").value += List_CPS + String_CPS;
         
         LOG(["RUNNING SANITY CHECKS"]);
@@ -206,11 +380,12 @@ Factorial is Number:
     
         var code = document.getElementById("code").value;
         document.getElementById("output").value = "";
-        RESET();
+        Data = new DataStore();
         Data.JITName = js_conversion_rename;
         
         var conversions = compile(code);
         load_bytecode(Data, conversions);
+        load_bytecode(Data, document.getElementById("inputBytecode").value);
         
         
         document.getElementById("bytecode").value = conversions;

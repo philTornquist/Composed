@@ -18,6 +18,52 @@ function JS_collapse_structure(struc, nc)
 }
 
 
+function JS_insert_end_tags(Data, conversion, bytecode, i)
+{
+    var nc = [];
+    var addReturn = BCins(bytecode[0]) == "Conversion" ||
+                    BCins(bytecode[0]) == "Specification";
+    for (; i < bytecode.length; i++)
+    {
+        switch(BCins(bytecode[i]))
+        {
+            case "Answer":
+                nc.push(bytecode[i]);
+                var code = value_at(bytecode, i+1);
+                for (var j = 0; j < code.length; j++)
+                    nc.push(code[j]);
+                i += code.length;
+                nc.push("IGNORE>;\n}");
+                break;
+            case "SubConversion":
+                nc.push(bytecode[i]);
+                var code = value_at(bytecode, i+1);
+                i += code.length;
+                
+                code = JS_insert_end_tags(Data, conversion, code, 0);
+                for (var j = 0; j < code.length; j++)
+                    nc.push(code[j]);
+                nc.push("IGNORE>;");
+                break;
+            case "Conversion":
+            case "Specification":
+            case "Hint":
+                nc.push(bytecode[i]);
+                break;
+            default:
+                if (addReturn) nc.push("IGNORE>return ");
+                addReturn = false;
+                nc.push(bytecode[i]);
+                break;
+        }
+    }
+    
+    if (BCins(bytecode[0]) == "Conversion" || BCins(bytecode[0]) == "Specification")
+        nc.push("IGNORE>;");
+    
+    return nc;
+}
+/*
 function JS_addEndConversion(Data, struc) {
     var ins = struc[0].split(">")[0];
     if (ins == "Conversion")
@@ -40,9 +86,56 @@ function JS_addEndConversion(Data, struc) {
     }
     else
         return struc;
+}*/
+
+
+function JS_insert_param_names(Data, conversion, bytecode, i)
+{
+    if (BCins(bytecode[i]) !== "Conversion" &&
+        BCins(bytecode[i]) !== "Specification")
+        return;
+        
+    var inputs = inputs_of(conversion);
+    var count = 1;
+    var args = [inputs[0].replace(/'/g,"_").replace(/-/g,"_$_")+count];
+    for (var j = 1; j < inputs.length; j++)
+    {
+        if (inputs[j] == inputs[j-1])
+            count++;
+        else
+            count=1;
+        args.push(inputs[j].replace(/'/g,"_").replace(/-/g,"_$_") + count);
+    }
+    
+    for (var ask in Data.Asks[conversion])
+        args.push("$"+ask);
+        
+    var nc = [];
+    
+    nc.push(bytecode[i]);
+    nc.push("Arguments>"+args.join(","));
+        
+    for (i++; i < bytecode.length; i++)
+    {
+        switch(BCins(bytecode[i]))
+        {
+            case "Param":
+                nc.push(BCins(bytecode[i]) + ">" + args[parseInt(BCdata(bytecode[i]))]);
+                break;
+            case "Sub":
+                nc.push(BCins(bytecode[i]) + ">" + Data.SubConversions[conversion][parseInt(BCdata(bytecode[i]))]);
+                break;
+            default:
+                nc.push(bytecode[i]);
+                break;
+        }
+    }
+    
+    return nc;
 }
 
-function JS_insertParamNames(Data, struc, call, extras)
+
+/*function JS_insertParamNames(Data, struc, call, extras)
 {
     if (struc[0].split(">")[0] !== "Conversion") return struc;
     
@@ -86,68 +179,65 @@ function JS_insertParamNames(Data, struc, call, extras)
         nc.push(bc[i]);
     }
     return nc;
-}
+}*/
 
-function JS_reorderAnswers(Data, struc, call)
+function JS_insert_commas(Data, conversion, bytecode, i)
 {
     var nc = [];
-    var ans = [];
-    var endcall = undefined;
-    
-    var entered = undefined;
-    
-    for (var i = 0; i < struc.length; i++)
+    for (; i < bytecode.length; i++)
     {
-        if (struc[i] instanceof Array)
+        if (BCins(bytecode[i]) == "Enter")
         {
-            nc.push(struc[i]);
+            var ans = [];
+            var counter = {};
+            var first_param = false;
+            var commas_to_insert = inputs_of(BCdata(bytecode[i])).length - 1;
+            var code = forall_inputs(bytecode, i,
+                function(bc, i) 
+                { 
+                    var nc = JS_insert_commas(Data, conversion, bc, i);
+                    if (first_param)
+                    {
+                        if (commas_to_insert-- > 0) 
+                            nc.unshift("IGNORE>,\n");
+                    }
+                    else
+                        first_param = true;
+                        
+                    return nc;
+                },
+                function(bc, i, answer)
+                {
+                    var nc = JS_insert_commas(Data, conversion, bc, i);
+                    
+                    ans.push("IGNORE>,\n");
+                    ans.push("Answer>" + answer);
+                    
+                    for (var j = 0; j < nc.length; j++)
+                        ans.push(nc[j]);
+                    
+                    return [];
+                }, counter);
+            
+            i += counter.value;
+            
+            
+            var callIns = code.pop();
+            for (var j = 0; j < code.length; j++)
+                nc.push(code[j]);
+            for (var j = 0; j < ans.length; j++)
+                nc.push(ans[j]);
+                
+            nc.push(callIns);
         }
         else
-        {
-            var split = struc[i].split(">");
-            var ins = split[0];
-            var data = split[1];
-            switch(ins)
-            {
-                case "Enter":
-                    entered = data;
-                    nc.push(struc[i]);
-                    
-                    
-                    for (var key in Data.Asks[entered])
-                        ans.push(["Answer>" + key, "Nothing>"]);
-                    break;
-                case "Answer":
-                    for (var key in Data.Asks[entered])
-                        if (key == data)
-                            ans[Data.Asks[entered][key]] = ["Answer>"+key, struc[i+1]];
-                    i++;
-                    break;
-                case "End Answers":
-                    break;
-                case "Call":
-                    endcall = struc[i];
-                    break;
-                default:
-                    nc.push(struc[i]);
-                    break;
-            }
-        }
+            nc.push(bytecode[i]);
     }
-    
-    if (endcall === undefined) return struc;
-    
-    for (var i = 0; i < ans.length; i++) { 
-        if (ans[i] === undefined) throw "EE"; 
-        nc.push([ans[i][0],ans[i][1],"End Answer>"]); 
-    }
-    nc.push(endcall);
     
     return nc;
 }
-
-function JS_insertCommas(Data, struc)
-{
+    /*
+  insertCommas
     var nc = [];
     var started = false;
     var firstParam = false;
@@ -175,8 +265,38 @@ function JS_insertCommas(Data, struc)
         nc.push(struc[i]);
     }
     return nc;
+}*/
+
+function JS_expand_element(Data, conversion, bytecode, i)
+{
+    var nc = [];
+    for (; i < bytecode.length; i++)
+    {
+        if (BCins(bytecode[i]) == "Element")
+        {
+            var typeconv = Data.Types[inputs_of(conversion)[0]];
+            if (typeconv && 
+                (Data.Conversions[typeconv][1] == "Data Structure>1" ||
+                 BCins(Data.Conversions[typeconv][0]) == "Specification"))
+                nc.push("Param>0");
+            else
+            {
+                nc.push("IGNORE>function(r){if (r === undefined) throw 'err'; return r==\"Nothing\"?\"Nothing\":");
+                nc.push("IGNORE>r["+BCdata(bytecode[i])+"];");
+                nc.push("IGNORE>}(");
+                nc.push("Param>0");
+                nc.push("IGNORE>)");
+            }
+        }
+        else
+            nc.push(bytecode[i]);
+    }
+    return nc;
 }
 
+
+
+/*
 function JS_expandElement(Data, struc)
 {
     if (!(struc[1] instanceof Array) &&
@@ -202,135 +322,98 @@ function JS_expandElement(Data, struc)
         return clone;
     }
     return struc;
-}
+}*/
 
-function JS_Compile(Data, ins, data, conversion, extras)
+function JS_compile(Data, conversion, bytecode, i)
 {
     var jsString = "";
-        
-    switch (ins) {
-        case "Conversion":
-            //jsString = "this.$"+data+"=function(";
-            
-            /* DATA LOG
-            jsString  = "var $myeval$ = [];\n";
-            jsString += "$evaluation$.push($myeval$);\n";
-            jsString += "$myeval$['_CONVERSION'] = \"" + conversion + "\";\n";
-            */
-            break;
-        case "Arguments":
-            //jsString = data + ") { \n ";
-            
-            /* DATA LOG
-            jsString = "$myeval$['_ARGUMENTS'] = [" + data + "];\n";
-            */
-            break;
-        case "Return":
-            jsString = "return ";
-            
-            /* DATA LOG
-            jsString = "$myeval$['_RESULT'] = ";
-            */
-            break
-        case "End Conversion":
-            //jsString = ";\n}";
-            
-            /* DATA LOG
-            jsString = ";\nreturn $myeval$['_RESULT']";
-            */
-            
-            jsString += ";";
-            break;
-        case "SubConversion":
-            jsString = "var " + data + " = ";
-            break;
-        case "End SubConversion":
-            jsString = ";\n";
-            break;
-        case "Enter":
-            jsString = "this." + js_conversion_rename(data) + "(\n";
-            break;    
-        case "Call":
-            /* DATA LOG
-            jsString = "\n,$myeval$\n)";
-            */
-            jsString = "\n)";
-            break;
-        case "Ask":
-            jsString = "($" + data + " ? $" + data + ".apply(this):\"Nothing\") ";
-            break;
-        case "Answer":
-            jsString = "function(){//Answer: "+data + "\nreturn ";
-            break;
-        case "End Answer":
-            jsString = "\n}";
-            break;
-        case "Param":
-            jsString = data;
-            break;
-        case "Sub":
-            jsString = data;
-            break;
-        case "Data Structure":
-            if (data == "1")
-            {
-                jsString = inputs_of(conversion)[0].replace(/'/g,"_") + "1";
-            }
-            else
-            {
-                var inputs = inputs_of(conversion);
-                var count = 1;
-                var args = [inputs[0].replace(/'/g,"_").replace(/-/g,"_$_")+count];
-                for (var i = 1; i < inputs.length; i++)
+    var arguments = "";
+    for(; i < bytecode.length; i++)
+    {
+        var ins = BCins(bytecode[i]);
+        var data = BCdata(bytecode[i]);
+        switch (ins) {
+            case "Arguments":
+                arguments = data;
+                break;
+            case "SubConversion":
+                jsString += "var " + data + " = ";
+                break;
+            case "Enter":
+                jsString += "this." + js_conversion_rename(data) + "(\n";
+                break;    
+            case "Call":
+                /* DATA LOG
+                jsString = "\n,$myeval$\n)";
+                */
+                jsString += "\n)";
+                break;
+            case "Ask":
+                jsString += "($" + data + " ? $" + data + ".apply(this):\"Nothing\") ";
+                break;
+            case "Answer":
+                jsString += "function(){//Answer: "+data + "\nreturn ";
+                break;
+            case "Param":
+                jsString += data;
+                break;
+            case "Sub":
+                jsString += data;
+                break;
+            case "Data Structure":
+                if (data == "1")
                 {
-                    if (inputs[i] == inputs[i-1])
-                        count++;
-                    else
-                        count=1;
-                    args.push(inputs[i].replace(/'/g,"_").replace(/-/g,"_$_") + count);
+                    jsString += inputs_of(conversion)[0].replace(/'/g,"_") + "1";
                 }
-              
-                jsString += "function() {\n";
-                jsString += "var r = ";
-                jsString += "[" + args[0].replace(/'/g,"_");
-                for (var i = 1; i < args.length; i++)
-                    jsString += "," + args[i].replace(/'/g,"_");
-                jsString += "];\n";
-                    
-                jsString += "for(var i=0;i<r.length;i++)\n";
-                jsString += "if(r[i]!==\"Nothing\")\n";
-                jsString += "return r;\n";
-                jsString += "return \"Nothing\";"
-                jsString += "\n}()";
-            }
-            break;
-        case "Element":
-            //  If the conversions is a specification just return the data
-            
-            /*if (Data.Specifics[inputs_of(conversion)[0]])
-            {
-               jsString = inputs_of(conversion)[0].replace(/'/g,"_") + "1";
-            }
-            else
-            {
-                jsString = inputs_of(conversion)[0].replace(/'/g,"_") + "1==\"Nothing\"?\"Nothing\":" + inputs_of(conversion)[0].replace(/'/g,"_") + "1[" + data + "]";
-            }*/
-            break;
-        case "Number":
-            jsString = data;
-            break;
-        case "Nothing":
-            jsString = "\"Nothing\"";
-            break;
-        case "Character":
-            jsString = "\"" + data + "\"";
-            break;
-        case "Selector":
-            jsString = '"' + data + '"' + "\n";
-            break;
+                else
+                {
+                    var inputs = inputs_of(conversion);
+                    var count = 1;
+                    var args = [inputs[0].replace(/'/g,"_").replace(/-/g,"_$_")+count];
+                    for (var j = 1; j < inputs.length; j++)
+                    {
+                        if (inputs[j] == inputs[j-1])
+                            count++;
+                        else
+                            count=1;
+                        args.push(inputs[j].replace(/'/g,"_").replace(/-/g,"_$_") + count);
+                    }
+                  
+                    jsString += "function() {\n";
+                    jsString += "var r = ";
+                    jsString += "[" + args[0].replace(/'/g,"_");
+                    for (var j = 1; j < args.length; j++)
+                        jsString += "," + args[j].replace(/'/g,"_");
+                    jsString += "];\n";
+                        
+                    jsString += "for(var i=0;i<r.length;i++)\n";
+                    jsString += "if(r[i]!==\"Nothing\")\n";
+                    jsString += "return r;\n";
+                    jsString += "return \"Nothing\";"
+                    jsString += "\n}()";
+                }
+                break;
+            case "Number":
+                jsString += data;
+                break;
+            case "Nothing":
+                jsString += "\"Nothing\"";
+                break;
+            case "Character":
+                jsString += "\"" + data + "\"";
+                break;
+            case "Selector":
+                jsString += '"' + data + '"' + "\n";
+                break;
+            case "IGNORE":
+                jsString += data;
+                break;
+        }
     }
-          
-    return jsString;
+     
+    document.getElementById("jsCode").value += "function " + conversion + "(" + arguments + ") {\n" + jsString + "\n}\n\n";
+             
+    return new Function(arguments, jsString);
 }
 
 

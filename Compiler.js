@@ -41,15 +41,16 @@ function CodeDef(str) {
     this.skipcomment = function() { if (this.str.charAt(this.index) == '/') { this.index++; while(this.str.charAt(this.index) != '/' && this.str.charAt(this.index) != '\n') this.index++; if (this.str.charAt(this.index) == '/') this.index++; } };
 }
 
-function ConversionDefinition(output, inputs, selectors, bytecode) {
+function ConversionDefinition(type, output, inputs, selectors, bytecode) {
     this.output = output;
     this.inputs = inputs;
-    this.bytecode = bytecode;
     this.name = output;
 
     for (var i = 0; i < inputs.length; i++) this.name += "," + inputs[i];
     if (selectors.length != 0) this.name += ":" + selectors[0];
     for (var i = 1; i < selectors.length; i++) this.name += "," + selectors[i];
+    
+    this.bytecode = type + ">" + this.name + "\n" + bytecode;
 }
 
 function compile(str) {
@@ -57,7 +58,6 @@ function compile(str) {
     var bc = "";
     for (var i = 0; i < convs[0].length; i++)
     {
-        bc += "Conversion>" + convs[0][i].name + "\n";
         bc += convs[0][i].bytecode + "\n";
     }
     for (var i = 0; i < convs[1].length; i++)
@@ -106,8 +106,8 @@ function parse(str) {
 function parseElement(code) {
 
     var conversions = [];
-    var add = function(output, inputs, selectors, bytecode) {
-        conversions.push(new ConversionDefinition(output, inputs, selectors, bytecode));
+    var add = function(type, output, inputs, selectors, bytecode) {
+        conversions.push(new ConversionDefinition(type, output, inputs, selectors, bytecode));
     }
     var impures = [];
 
@@ -162,22 +162,30 @@ function parseElement(code) {
                     if (code.get() == ':') {
                         code.next();
                         code.clearWhite();
-                        bytecode = "Specification>\n"+parseConversion(code, {"value":0}, {"value":types[0]}, {}, {}, {}).bytecode();
+                        bytecode = parseConversion(code, {"value":0}, {"value":types[0]}, {}, {}, {}).bytecode();
+                        
+                        add("Specification",
+                            output,
+                            types,
+                            [],
+                            bytecode);    
                     }
                     else {
                         bytecode = "Data Structure>1";
+                        
+                        add("Conversion",
+                            output,
+                            types,
+                            [],
+                            bytecode);    
                     }
-                    add(
-                        output,
-                        types,
-                        [],
-                        bytecode);    
                     break;
 
                 //  The conversion is a Combination
                 default:
                     if (code.get() == ':') throw "Combination definition cannot contain a conversion";
-                    add(output,
+                    add("Conversion",
+                        output,
                         types,
                         [],
                         "Data Structure>" + types.length);
@@ -185,7 +193,8 @@ function parseElement(code) {
             }
 
             for (var i = 0; i < types.length; i++) {
-                add(types[i], 
+                add("Conversion",
+                    types[i], 
                     [output], 
                     [],
                     "Element>" + i);
@@ -219,7 +228,8 @@ function parseElement(code) {
                 
                 bytecode += "\n";
 
-                add(output,
+                add("Conversion",
+                    output,
                     injectArray,
                     [],
                     bytecode);
@@ -304,7 +314,8 @@ function parseElement(code) {
             var subconv_MAP_type = {};
             var subConversions = parseSubConversions(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type);
 
-            add(output, 
+            add("Conversion",
+                output, 
                 inputs, 
                 selectors, 
                 subConversions + 
@@ -400,7 +411,6 @@ function AnswersConversion(case_MAP_conversion) {
             bc += "Answer>" + key + "\n";
             bc += this.case_MAP_conversion[key].bytecode();
         }
-        bc += "End Answers>" + "\n";
         return bc;
     }
 }
@@ -451,11 +461,11 @@ function ActualConversion(output, inputs) {
     this.bytecode = function() {
         var bc = "Enter>" + this.signature + "\n";
 
-        if (this.answers) bc += this.answers.bytecode();
-
         for(var i = 0; i < this.inputs.length; i++) {
             bc += this.inputs[i].bytecode();
         }
+        
+        if (this.answers) bc += this.answers.bytecode();
         
         bc += "Call>" + this.signature + "\n";
 
@@ -473,8 +483,8 @@ function ContinuationConversion(output, input) {
     this.input.nextStage = this;
     this.bytecode = function() {
         var bc = "Enter>" + this.signature + "\n";
-        if (this.answers) bc += this.answers.bytecode();
         bc += this.input.bytecode();
+        if (this.answers) bc += this.answers.bytecode();
         bc += "Call>" + this.signature + "\n";
         return bc;
     };
