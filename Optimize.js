@@ -222,7 +222,8 @@ function inline_conversions(Data, conversion, bytecode, i)
             var inlineBC = lookupConversion;
             if (inlineBC === undefined) { nc.push(bytecode[i]); continue; }
             if (BCins(inlineBC[1]) !== "Enter" &&
-                BCins(inlineBC[1]) !== "ENTER") { nc.push(bytecode[i]); continue; }
+                BCins(inlineBC[1]) !== "ENTER" &&
+                BCins(inlineBC[1]) !== "Element") { nc.push(bytecode[i]); continue; }
             
             for (var j = 1; j < inlineBC.length; j++)
             {
