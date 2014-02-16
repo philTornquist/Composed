@@ -197,7 +197,7 @@ function parseElement(code) {
                     types[i], 
                     [output], 
                     [],
-                    "Element>" + i);
+                    "Element>" + i + "\nParam>0\nExtract>" + i);
 
                 if (types.length == 1) continue;
                 

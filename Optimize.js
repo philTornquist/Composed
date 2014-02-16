@@ -28,6 +28,30 @@ function remove_redundant_conversions(Data, conversion, bytecode, i)
     return nc;
 }
 
+function expand_element(Data, conversion, bytecode, i)
+{
+    var nc = [];
+    for (; i < bytecode.length; i++)
+    {
+        if (BCins(bytecode[i]) == "Element")
+        {
+            var typeconv = Data.Types[inputs_of(conversion)[0]];
+            if (typeconv && 
+                (Data.Conversions[typeconv][1] == "Data Structure>1" ||
+                 BCins(Data.Conversions[typeconv][0]) == "Specification"))
+            {
+                nc.push("Param>0");
+                i += 2;
+            }
+            else
+                nc.push(bytecode[i]);
+        }
+        else
+            nc.push(bytecode[i]);
+    }
+    return nc;
+}
+
 /*
 function removeRedundantConversions(Data, struc) {
     if (struc.length == 3)
@@ -173,6 +197,70 @@ function JS_reorderAnswers(Data, struc, call)
 }
 */
 
+
+function inline_conversions(Data, conversion, bytecode, i)
+{
+    var nc = [];
+    
+    for (; i < bytecode.length; i++)
+    {
+        if (BCins(bytecode[i]) == "Enter")
+        {
+            var counter = {};
+            var ast = ast_call(bytecode, i, counter); 
+            
+            var inlineConversion = BCdata(ast[0]);
+    
+            var lookupConversion = Data.PassCompiled[Data.CurrentPass-1][inlineConversion];
+            if (lookupConversion instanceof Function) { nc.push(bytecode[i]); continue; }
+            
+            if (Data.Hints[inlineConversion].Recursive) { nc.push(bytecode[i]); continue; }
+            
+            //  Contains selector type
+            if (inputs_of(inlineConversion)[0][0] == "-") { nc.push(bytecode[i]); continue; }
+            
+            var inlineBC = lookupConversion;
+            if (inlineBC === undefined) { nc.push(bytecode[i]); continue; }
+            if (BCins(inlineBC[1]) !== "Enter" &&
+                BCins(inlineBC[1]) !== "ENTER") { nc.push(bytecode[i]); continue; }
+            
+            for (var j = 1; j < inlineBC.length; j++)
+            {
+                switch(BCins(inlineBC[j]))
+                {
+                    case "Param":
+                        //  Get param from call
+                        //   +1 since the ast starts with the Enter instruction
+                        var bc = ast[parseInt(BCdata(inlineBC[j])) + 1];
+                        bc = inline_conversions(Data, conversion, bc, 0);
+                        for (var k = 0; k < bc.length; k++)
+                            nc.push(bc[k]);
+                        break;
+                    case "Ask":
+                        var askOffset = Data.Asks[inlineConversion][BCdata(inlineBC[j])];
+                        var bc = ast[1 + inputs_of(inlineConversion).length + askOffset];
+                        bc = inline_conversions(Data, conversion, bc, 0);
+                        //  First index is the Answer instruction
+                        for (var k = 1; k < bc.length; k++)
+                            nc.push(bc[k]);
+                        break;
+                    default:
+                        nc.push(inlineBC[j]);
+                        break;
+                }
+            }
+            
+            i += counter.value;
+        }
+        else
+            nc.push(bytecode[i]);
+    }
+    
+    return nc;
+}
+
+
+/*
 function inlineConversion(Data, struc, conversion) 
 {
     if (struc[0].split(">")[0] == "Enter")
@@ -220,4 +308,4 @@ function inlineConversion(Data, struc, conversion)
         return res[0];
     }
     return struc;
-}
+}*/

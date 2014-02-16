@@ -43,7 +43,7 @@ function JS_insert_end_tags(Data, conversion, bytecode, i)
                 code = JS_insert_end_tags(Data, conversion, code, 0);
                 for (var j = 0; j < code.length; j++)
                     nc.push(code[j]);
-                nc.push("IGNORE>;");
+                nc.push("IGNORE>;\n");
                 break;
             case "Conversion":
             case "Specification":
@@ -267,33 +267,6 @@ function JS_insert_commas(Data, conversion, bytecode, i)
     return nc;
 }*/
 
-function JS_expand_element(Data, conversion, bytecode, i)
-{
-    var nc = [];
-    for (; i < bytecode.length; i++)
-    {
-        if (BCins(bytecode[i]) == "Element")
-        {
-            var typeconv = Data.Types[inputs_of(conversion)[0]];
-            if (typeconv && 
-                (Data.Conversions[typeconv][1] == "Data Structure>1" ||
-                 BCins(Data.Conversions[typeconv][0]) == "Specification"))
-                nc.push("Param>0");
-            else
-            {
-                nc.push("IGNORE>function(r){if (r === undefined) throw 'err'; return r==\"Nothing\"?\"Nothing\":");
-                nc.push("IGNORE>r["+BCdata(bytecode[i])+"];");
-                nc.push("IGNORE>}(");
-                nc.push("Param>0");
-                nc.push("IGNORE>)");
-            }
-        }
-        else
-            nc.push(bytecode[i]);
-    }
-    return nc;
-}
-
 
 
 /*
@@ -347,6 +320,14 @@ function JS_compile(Data, conversion, bytecode, i)
                 jsString = "\n,$myeval$\n)";
                 */
                 jsString += "\n)";
+                break;
+            case "Element":
+                jsString += "function(r){return r==\"Nothing\"?\"Nothing\":";
+                jsString += "r["+BCdata(bytecode[i])+"];";
+                jsString += "}(";
+                break;
+            case "Extract":
+                jsString += ")";
                 break;
             case "Ask":
                 jsString += "($" + data + " ? $" + data + ".apply(this):\"Nothing\") ";

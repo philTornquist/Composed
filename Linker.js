@@ -29,7 +29,8 @@ function DataStore()
     this.Passes = [
         remove_redundant_conversions,
         reorder_answers,
-        JS_expand_element,
+        expand_element,
+        inline_conversions,
         JS_insert_end_tags,
         JS_insert_param_names,
         JS_insert_commas,
@@ -111,7 +112,7 @@ function load_conversion(Data, conversion, bytecode)
             if (bytecode[1].split(">")[1] == "1")
                 Data.Specifics[generic_type(output_of(conversion))] = true;
         }
-        else if (bytecode[1].split(">")[0] == "Specification") {
+        else if (bytecode[0].split(">")[0] == "Specification") {
             Data.Types[generic_type(output_of(conversion))] = conversion;
             Data.Specifics[generic_type(output_of(conversion))] = true;
         }
@@ -119,7 +120,7 @@ function load_conversion(Data, conversion, bytecode)
     //  Conversion is not generic
 	else 
     {
-		Data.Conversions[conversion] = compile_conversion(Data, conversion, bytecode);
+		Data.Conversions[conversion] = add_conversion(Data, conversion, bytecode);
         delete Data.Missing[conversion];
     }
 }
@@ -175,7 +176,7 @@ function link_conversions(Data)
                     else
                     {
                         var bytecode = build_conversion(Data, conversion, relocation, Data.Generics[generic], 0);
-                        Data.Conversions[conversion] = compile_conversion(Data, conversion, bytecode);
+                        Data.Conversions[conversion] = add_conversion(Data, conversion, bytecode);
                     }
                 }
     			break;
@@ -433,6 +434,29 @@ function build_conversion(Data, conversion, relocation, bytecode, i)
     log_linker_restructure(["RELOCATION"]);
     log_linker_restructure(relocation(".PRINT"));
     log_linker_restructure([]);
+    
+    //  Build the data structure conversion for the output type
+    if (Data.Types[output_of(conversion)] === undefined)
+    {
+        for (var type in Data.Types)
+        {
+            var gen_type = output_of(Data.Types[type]);
+            if (is_generic(gen_type))
+            {   
+                var genMap = {}
+                if (type_match(gen_type, output_of(conversion), genMap))
+                {
+                    var reloc = function (na, index) { return genMap[index]; };
+                    var inputs = inputs_of(Data.Types[type]);
+                    var dataType = replace_generic(gen_type, reloc);
+                    for (var j = 0; j < inputs.length; j++)
+                        dataType += "," + replace_generic(inputs[j], reloc);
+                    Data.Missing[dataType] = true;
+                    break;
+                }
+            }
+        }
+    }
 
 	bytecode = compile_generic(Data, conversion, relocation, bytecode, i);	
 	bytecode = order_inputs(conversion, bytecode, i);
@@ -538,6 +562,7 @@ function compile_generic(Data, conversion, relocation, bytecode, i) {
 				nc.push("Param>" + relocation("Param", parseInt(BCdata(bytecode[i]))));
 				break;
 			case "Element":
+            case "Extract":
 				var dataType = inputs_of(conversion)[0];
 				if (dataType.indexOf("'") !== -1)
 				{
@@ -548,19 +573,19 @@ function compile_generic(Data, conversion, relocation, bytecode, i) {
 				
 				if (dataGenVar)
 				{
-					var relocation = function() { return dataGenVar; }
+					var reloc = function() { return dataGenVar; }
 					var oInputs = inputs_of(dataConversion);
 					var dInputs = [];
-					dataConversion = replace_generic(output_of(dataConversion), relocation);
+					dataConversion = replace_generic(output_of(dataConversion), reloc);
 					for (var j = 0; j < oInputs.length; j++)
-						dInputs.addInOrder(replace_generic(oInputs[j], relocation));
+						dInputs.addInOrder(replace_generic(oInputs[j], reloc));
 				}
 				else
 					dInputs = inputs_of(dataConversion);
 				
 				for (var j = 0; j < dInputs.length; j++)
 					if (dInputs[j] === output_of(conversion))
-						nc.push("Element>" + j);
+						nc.push(BCins(bytecode[i]) + ">" + j);
 				break;
 			case "Enter":
 			case "Call":
@@ -589,7 +614,7 @@ function compile_generic(Data, conversion, relocation, bytecode, i) {
 }
 
 //  Returns pointer to start of conversion in code section
-function compile_conversion(Data, conversion, bytecode)
+function add_conversion(Data, conversion, bytecode)
 {
     Data.Hints[conversion] = {};
     
@@ -643,11 +668,6 @@ function compile_conversion(Data, conversion, bytecode)
 }
 
 
-function isDataStructureConversion(Data, conversion)
-{
-	return Data.DataStructures[output_of(conversion)] === conversion;
-}
-
 function replace_generic(type, relocation) {
 	if (type[0] !== '[') return type;
 	if (type[type.length - 1] === ']') return relocation("GenVar", type[1]);
@@ -662,15 +682,6 @@ function replace_generic(type, relocation) {
 	else return type.substring(3) + "'" + relocation("GenVar", type[1]) + "'";
 }
 
-
-function print_conversions(Data)
-{
-    for (var conversion in Data.Conversions)
-    {
-        if (Data.Conversions[conversion] instanceof Function) continue;
-        print_structure(build_structure(Data.Conversions[conversion]));
-    }
-}
 
 
 

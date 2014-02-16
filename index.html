@@ -160,6 +160,8 @@ Factorial is Number:
 <textarea id="inputBytecode" rows=50 cols=100>
 Conversion>Number,Sum
 Element>0
+Param>0
+Extract>0
 
 Conversion>Sum,Number
 Data Structure>1
@@ -175,9 +177,11 @@ EXIT>
 
 Conversion>Number,Difference
 Element>0
+Param>0
+Extract>0
 
 Conversion>Difference,Number
-Data Structure>0
+Data Structure>1
 
 Conversion>Difference,Number,Number
 ENTER>
@@ -192,7 +196,9 @@ Conversion>Quotient,Number
 Data Structure>1
 
 Conversion>Number,Quotient
+Element>0
 Param>0
+Extract>0
 
 Conversion>Quotient,Number,Number
 ENTER>
@@ -203,8 +209,13 @@ Param>1
 IGNORE>)
 EXIT>
 
+Conversion>Modulus,Number
+Data Structure>1
+
 Conversion>Number,Modulus
+Element>0
 Param>0
+Extract>0
 
 Conversion>Modulus,Number,Number
 ENTER>
@@ -215,8 +226,13 @@ Param>1
 IGNORE>)
 EXIT>
 
+Conversion>Product,Number
+Data Structure>1
+
 Conversion>Number,Product
+Element>0
 Param>0
+Extract>0
 
 Conversion>Product,Number,Number
 ENTER>
@@ -228,7 +244,9 @@ IGNORE>)
 EXIT>
 
 Conversion>Number,Square
+Element>0
 Param>0
+Extract>0
 
 Specification>Square,Number
 ENTER>
@@ -240,7 +258,9 @@ IGNORE>)
 EXIT>
 
 Conversion>Number,SquareRoot
+Element>0
 Param>0
+Extract>0
 
 Specification>SquareRoot,Number
 ENTER>
@@ -259,7 +279,9 @@ Conversion>[A]Compare,[A]
 Data Structure>1
 
 Conversion>[A],[A]Compare
+Element>0
 Param>0
+Extract>0
 
 Conversion>[A]Compare,Character,Character
 ENTER
@@ -297,6 +319,10 @@ Ask>greater
 IGNORE>)
 EXIT>
 
+Conversion>[A],[A]Exists
+Element>0
+Param>0
+Extract>0
 
 Specification>[B]Exists,[A]
 ENTER>
@@ -309,8 +335,6 @@ Ask>no
 IGNORE>)
 EXIT>
 
-Conversion>[A],[A]Exists
-Param>0
 </textarea>
 <textarea id="bytecode" rows=50 cols=100></textarea>
 <textarea id="jsCode" rows=50 cols=100></textarea>
