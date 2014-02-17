@@ -50,6 +50,8 @@ function JS_insert_end_tags(Data, conversion, bytecode, i)
             case "Hint":
                 nc.push(bytecode[i]);
                 break;
+            case "Enter":
+                if (!addReturn) nc.push("IGNORE>\n");
             default:
                 if (addReturn) nc.push("IGNORE>return ");
                 addReturn = false;
@@ -127,7 +129,7 @@ function JS_insert_commas(Data, conversion, bytecode, i)
                     if (first_param)
                     {
                         if (commas_to_insert-- > 0) 
-                            nc.unshift("IGNORE>,\n");
+                            nc.unshift("IGNORE>,");
                     }
                     else
                         first_param = true;
@@ -138,7 +140,7 @@ function JS_insert_commas(Data, conversion, bytecode, i)
                 {
                     var nc = JS_insert_commas(Data, conversion, bc, i);
                     
-                    ans.push("IGNORE>,\n");
+                    ans.push("IGNORE>\n,");
                     ans.push("Answer>" + answer);
                     
                     for (var j = 0; j < nc.length; j++)
@@ -181,10 +183,10 @@ function JS_compile(Data, conversion, bytecode, i)
                 jsString += "var " + data + " = ";
                 break;
             case "Enter":
-                jsString += "this." + js_conversion_rename(data) + "(\n";
+                jsString += "this." + js_conversion_rename(data) + "(";
                 break;    
             case "Call":
-                jsString += "\n)";
+                jsString += ")";
                 break;
             case "Element":
                 jsString += "function(r){return r==\"Nothing\"?\"Nothing\":";
@@ -198,7 +200,7 @@ function JS_compile(Data, conversion, bytecode, i)
                 jsString += "($" + data + " ? $" + data + ".apply(this):\"Nothing\") ";
                 break;
             case "Answer":
-                jsString += "function(){//Answer: "+data + "\nreturn ";
+                jsString += "\nfunction(){//Answer: "+data + "\nreturn ";
                 break;
             case "Param":
                 jsString += data;

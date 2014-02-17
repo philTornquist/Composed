@@ -37,25 +37,6 @@ function DataStore()
         JS_compile
         
     ];
-    /*this.Passes = [
-    
-    function(Data, conversion, struc) { return build_structure(struc, 0); },
-    function(Data, conversion, struc) { return operateAST(Data, struc, undefined, removeRedundantConversions); },
-    function(Data, conversion, struc) { return operateAST(Data, struc, undefined, JS_expandElement, conversion); },
-    function(Data, conversion, struc) { return operateAST(Data, struc, undefined, JS_reorderAnswers, conversion); },
-    function(Data, conversion, struc) { return operateAST(Data, struc, undefined, inlineConversion, conversion); },
-    function(Data, conversion, struc) { return operateAST(Data, struc, undefined, JS_addEndConversion); },
-    function(Data, conversion, struc) { return operateAST(Data, struc, undefined, JS_insertCommas); },
-    function(Data, conversion, struc) { return operateAST(Data, struc, undefined, JS_insertParamNames, conversion); },
-    function(Data, conversion, struc) { return operateAST(Data, struc, JS_Compile, undefined, conversion); },
-    function(Data, conversion, struc) { 
-        var bc = JS_collapse_structure(struc).join("");
-        var args = Data.PassCompiled[Data.CurrentPass-2][conversion][1].split(">")[1];
-    
-        document.getElementById("jsCode").value += "function " + conversion + "(" + args + ") {\n" + bc + "\n}\n\n";
-        
-        return new Function(args+",$evaluation$", bc);
-    } ];*/
 }
 
 function load_bytecode(Data, bytecode)
