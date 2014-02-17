@@ -35,11 +35,8 @@ function Test_JSCompiler()
     
     load_bytecode(Data, conversions);
     load_bytecode(Data, document.getElementById("inputBytecode").value);
-    /*for(var i = 0; i < conversions[0].length; i++) {
-    	load_conversion(Data, conversions[0][i].name, conversions[0][i].bytecode);
-    }*/
     
-
+    
     var failed = 0;
     var results = [];
     function check(result, conv, params, ans) {
