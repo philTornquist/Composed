@@ -31,11 +31,11 @@ function DataStore()
         reorder_answers,
         expand_element,
         inline_conversions,
+        
         JS_insert_end_tags,
         JS_insert_param_names,
         JS_insert_commas,
         JS_compile
-        
     ];
 }
 
@@ -598,6 +598,7 @@ function compile_generic(Data, conversion, relocation, bytecode, i) {
 function add_conversion(Data, conversion, bytecode)
 {
     Data.Hints[conversion] = {};
+    var nc = [];
     
     var selectors = selectors_of(conversion);
     for (var i = 0; i < selectors.length; i++)
@@ -615,37 +616,47 @@ function add_conversion(Data, conversion, bytecode)
 		var data = tmp[1];
 		switch(ins)
 		{
+            case "Hint":
+                Data.Hints[conversion][HintIns(data)] = HintData(data);
+                break;
 			case "Enter":
+                nc.push(bytecode[i]);
                 if (data === conversion) Data.Hints[data].Recursive = true;
                 if (Data.Conversions[data] === undefined) Data.Missing[data] = true;
 				if (!Data.Links[data]) Data.Links[data] = [];
 				Data.Links[data].push(conversion + ">" + i);
 				break;
             case "Selector":
+                nc.push(bytecode[i]);
                 var sel_type = selector_type(data);
                 if (!Data.Selectors[sel_type]) Data.Selectors[sel_type] = {};
                 Data.Selectors[sel_type][selector_select(data)] = true;
                 break;
             case "Ask":
+                nc.push(bytecode[i]);
                 if (!Data.Asks[conversion]) Data.Asks[conversion] = {};
                 if (Data.Asks[conversion][data] === undefined)
                     Data.Asks[conversion][data] = ask_count++;
                 break;
             case "SubConversion":
+                nc.push(bytecode[i]);
                 if (!Data.SubConversions[conversion]) Data.SubConversions[conversion] = [];
                 Data.SubConversions[conversion].push(data);
                 break;
+            default:
+                nc.push(bytecode[i]);
+                break;
 		}	
 	}	
-	if (bytecode[1].split(">")[0] == "Data Structure" ||
-        bytecode[0].split(">")[0] == "Specification") 
+	if (nc[1].split(">")[0] == "Data Structure" ||
+        nc[0].split(">")[0] == "Specification") 
     {
         Data.Types[output_of(conversion)] = conversion;
-        if (bytecode[0].split(">")[0] == "Specification")
+        if (nc[0].split(">")[0] == "Specification")
             Data.Specifics[output_of(conversion)] = true;
     }
     
-    return bytecode;
+    return nc;
 }
 
 
@@ -687,15 +698,30 @@ function runInline()
     LOG(["Running Inline Conversions"]);
     function dataifyParamString(str)
     {
+        function expand_string(str)
+        {
+            return [str[0], str.length > 1 ? expand_string(str.substring(1)) : "Nothing"];
+        }
+        
         str += ",";
         var result = [];
         var bracecount = 0;
         var needs_more_work = false;
         var last_substring = 0;
+        
+        var in_quotes = false;
+        
         for(var i = 0; i < str.length; i++)
         {
+            if (in_quotes && str[i] !== '"')
+            {
+                continue;
+            }
             switch(str[i])
             {
+                case '"':
+                    in_quotes = !in_quotes;
+                    break;
                 case '[':
                     bracecount++;
                     if (!needs_more_work) last_substring++;
@@ -708,7 +734,9 @@ function runInline()
                     if (bracecount !== 0) break;
                     var substring = str.substring(last_substring, i);
                     if (needs_more_work) result.push(dataifyParamString(substring.substring(0, substring.length-1)));
-                    else result.push( isFinite(substring) ? parseInt(substring) : substring);
+                    else result.push((substring[0] == '"' && substring[substring.length-1] == '"') ?
+                                     expand_string(substring.substring(1, substring.length-1)) :
+                                     isFinite(substring) ? parseInt(substring) : substring);
                     needs_more_work = false;
                     last_substring = i+1;
                     break;

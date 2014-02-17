@@ -1,19 +1,3 @@
-function Conversion(call, args, expanded) 
-{
-	var funct = Data.JS[call];
-
-	if (funct === undefined)
-	{
-		if (inputs_of(call).length == 1 && inputs_of(call)[0] === "Nothing") 
-        {
-        	funct = function() { return "Nothing"; };
-        	Data.JS[call] = funct;
-        }
-	}
-}
-
-
-
 function Test_JSCompiler()
 {
 	var log_compiler = false;
@@ -83,10 +67,9 @@ function Test_JSCompiler()
     var results = [];
     function check(result, conv, params) {
         
-        params.push([]);
         var funct = CALL(Data, conv);
         var test = funct.apply(Data.JITed, params);
-        console.log(params.pop());
+        console.log(test);
         test = test ? test : "Nothing";
         if ("" + result === "" + test) LOG("Test Passed! " + result + " = " + conv + params);
         else { failed++;
@@ -104,8 +87,8 @@ function Test_JSCompiler()
 
     
     check(  23,                                   "X,Y",                                                    [3]);
-    check(  [1,2],                                "Point2D,-Type,Number,Number",                             ["Type-Selector",1,2]);
-    check(  [1,20],                               "Point2D,-Type,Number",                                    ["Type-Selector",1]);
+    check(  [1,2],                                "Point2D,-Type,Number,Number",                            ["Type-Selector",1,2]);
+    check(  [1,20],                               "Point2D,-Type,Number",                                   ["Type-Selector",1]);
     check(  [5,23],                               "Point2D,Number",                                         [5]);
     check(  [12,20],                              "TestSelector,Point2D",                                   [[12,9]]);
     check(  26,                                   "Sum,Number,Number,Number,Number",                        [5,6,7,8]);

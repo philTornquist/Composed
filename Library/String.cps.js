@@ -2,6 +2,8 @@ var String_CPS = "\
 String is List'Character'                                                           \n\
 AppendedString is String                                                            \n\
 PrependedString is String                                                           \n\
+Substring is String:                                                                \n\
+    value > List'Character' > List'Character' > String                              \n\
                                                                                     \n\
 AppendedString from String(s1), String(s2):                                         \n\
     [                                                                               \n\
@@ -26,4 +28,7 @@ AppendedString from String(s), Character(c):                                    
             Nothing > List'Character'                                               \n\
         ] > List'Character' > String                                                \n\
     ] > AppendedString                                                              \n\
+                                                                                    \n\
+Character from String(s):                                                           \n\
+    s > List'Character' > Character                                                 \n\
 "

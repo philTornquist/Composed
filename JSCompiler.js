@@ -129,7 +129,7 @@ function JS_insert_commas(Data, conversion, bytecode, i)
                     if (first_param)
                     {
                         if (commas_to_insert-- > 0) 
-                            nc.unshift("IGNORE>,");
+                            nc.unshift("IGNORE>,\n");
                     }
                     else
                         first_param = true;
@@ -140,7 +140,7 @@ function JS_insert_commas(Data, conversion, bytecode, i)
                 {
                     var nc = JS_insert_commas(Data, conversion, bc, i);
                     
-                    ans.push("IGNORE>\n,");
+                    ans.push("IGNORE>,\n");
                     ans.push("Answer>" + answer);
                     
                     for (var j = 0; j < nc.length; j++)
@@ -189,7 +189,7 @@ function JS_compile(Data, conversion, bytecode, i)
                 jsString += ")";
                 break;
             case "Element":
-                jsString += "function(r){return r==\"Nothing\"?\"Nothing\":";
+                jsString += "function(r){return (r instanceof String && r==\"Nothing\")?\"Nothing\":";
                 jsString += "r["+BCdata(bytecode[i])+"];";
                 jsString += "}(";
                 break;
@@ -227,15 +227,29 @@ function JS_compile(Data, conversion, bytecode, i)
                         args.push(inputs[j].replace(/'/g,"_").replace(/-/g,"_$_") + count);
                     }
                   
+                    /*
                     jsString += "function() {\n";
-                    jsString += "var r = ";
+                    jsString += "var r = [";
                     jsString += "[" + args[0].replace(/'/g,"_");
                     for (var j = 1; j < args.length; j++)
                         jsString += "," + args[j].replace(/'/g,"_");
                     jsString += "];\n";
                         
                     jsString += "for(var i=0;i<r.length;i++)\n";
-                    jsString += "if(r[i]!==\"Nothing\")\n";
+                    jsString += "if(!(r instanceof String && r==\"Nothing\"))\n";
+                    jsString += "return r;\n";
+                    jsString += "return \"Nothing\";"
+                    jsString += "\n}()";*/
+                    jsString += "function() {\n";
+                    jsString += "var r = []\n";
+                    for (var j = 0; j < args.length; j++)
+                    {
+                        jsString += "r[" + j + "] = " + args[j].replace(/'/g,"_") + "\n";
+                        jsString += "r[\"" + inputs[j] + "\"] = " + args[j].replace(/'/g,"_") + "\n";
+                    }
+                        
+                    jsString += "for(var i=0;i<" + args.length + ";i++)\n";
+                    jsString += "if(!(r instanceof String && r==\"Nothing\"))\n";
                     jsString += "return r;\n";
                     jsString += "return \"Nothing\";"
                     jsString += "\n}()";

@@ -37,125 +37,123 @@
     <div>
 
         <textarea id="code" rows=50 cols=100>
-Test1 = Point2D,X,Y 1,2:
-Test2 = Summation,List'Number' [[[Nothing,3],2],1]:
-Test3 = STD,List'Number' [[[[Nothing,4],3],2],1]:
-Test4 = String,Number 12345:
-Test5 = Number,String "12345":
-Test6 = Factorial,Number 10:
-
-
-X is Number
-Y is Number
-Point2D is X, Y
-
-IsLessThan5 is Number:
-   [value, 5] > Compare'Number' {
-       less: value
-   } > Number
-
-Summation is Sum
-Sum from Number(n), Sum(s):
-    [
-        n,
-        s > Number
-    ] > Sum
-Summation from List'Number'(l):
-   [
-       l,
-       [0,0] > Sum
-   ] > Foldl'Sum' > Sum > Summation
-
-Average is Number
-Average from Sum(s), Count(c):
-    [
-        s > Number,
-        c > Number
-    ] > Quotient > Number > Average
-
-Average from List'Number'(l):
-    [
-        l > Summation > Sum,
-        l > Count
-    ] > Average
-
-STD is Number
-STD from List'Number'(l):
-    [
-        [
-            l,
-            l > Average > Number
-        ] > Map'Difference' > Map'Number' > Map'Square' > Map'Number' > List'Number' > Summation > Sum > Number,
-        [
-            l > Count > Number,
-            1
-        ] > Difference > Number
-    ] > Quotient > Number > SquareRoot > Number > STD
+Test_Parser'Literal' = Parser'Literal',Parser'Number' [123,"Test Type_"]:
     
-String from Number(n):
-    mod: [n, 10] > Modulus > Number
-    quo: [
+SourceText is String
+[A]Parser is [A], SourceText    
+    
+Character from [A]Parser(p):
+    p > SourceText > String > Character
+    
+[A]Parser from [A](a), [B]Parser(p):
+    [
+        a,
+        p > SourceText
+    ] > [A]Parser
+    
+[A]NextParser is [A]Parser:   
+    [
+        value > SourceText > String > Substring > String > SourceText,
+        value > [A]
+    ] > [A]Parser
+
+
+        
+Literal is String
+Parser'Literal' from [A]Parser(p):
+    [
+        Nothing > Literal,
+        p
+    ] > Parser'Literal' > Parser'Literal'
+
+Parser'Literal' from Parser'Literal'(p):
+    p > IsLiteralTerminator > Bit > Test'Parser'Literal'' {
+        false:
             [
-                n,
-                mod
-            ] > Difference > Number,
-            10
-         ] > Quotient > Number
-    
-    check9: [mod, 9] > Compare'Character'{equal: "9" } > Character
-    check8: [mod, 8] > Compare'Character'{equal: "8" less: check9 greater:check9 } > Character
-    check7: [mod, 7] > Compare'Character'{equal: "7" less: check8 greater:check8 } > Character
-    check6: [mod, 6] > Compare'Character'{equal: "6" less: check7 greater:check7 } > Character
-    check5: [mod, 5] > Compare'Character'{equal: "5" less: check6 greater:check6 } > Character
-    check4: [mod, 4] > Compare'Character'{equal: "4" less: check5 greater:check5 } > Character
-    check3: [mod, 3] > Compare'Character'{equal: "3" less: check4 greater:check4 } > Character
-    check2: [mod, 2] > Compare'Character'{equal: "2" less: check3 greater:check3 } > Character
-    check1: [mod, 1] > Compare'Character'{equal: "1" less: check2 greater:check2 } > Character
-    check0: [mod, 0] > Compare'Character'{equal: "0" less: check1 greater:check1 } > Character
+                [
+                    p > Character,
+                    p > Literal > String
+                ] > AppendedString > String > Literal,
+                p > NextParser'Literal' > Parser'Literal'
+            ] > Parser'Literal' > Parser'Literal'
+        true: p
+    } > Parser'Literal'
 
-    [n, 0] > Compare'String' {
-        greater: [check0, quo > String] > AppendedString > String
-        less: [check0, quo > String] > AppendedString > String
-    } > String
-    
-    
-NumberString is String
-Number from String(s):
-    [
-        s > List'Character',
-        0 > NumberStringFold
-    ] > Foldl'NumberStringFold' > NumberStringFold > Number
-NumberStringFold is Number
-NumberStringFold from Character(c), NumberStringFold(n):
+ClearedWhite is Number
+Parser'ClearedWhite' from [A]Parser(p):
+    p > IsWhiteSpace > Bit > Test'Parser'ClearedWhite''{
+        true:
+            p > [A]NextParser > [A]Parser > Parser'ClearedWhite'
+        false:
+            [
+                p,
+                12345 > ClearedWhite
+            ] > Parser'ClearedWhite'
+    } > Parser'ClearedWhite'
 
-    check9: [c, "9"] > Compare'Number'{equal: 9 } > Number
-    check8: [c, "8"] > Compare'Number'{equal: 8 less: check9 greater:check9 } > Number
-    check7: [c, "7"] > Compare'Number'{equal: 7 less: check8 greater:check8 } > Number
-    check6: [c, "6"] > Compare'Number'{equal: 6 less: check7 greater:check7 } > Number
-    check5: [c, "5"] > Compare'Number'{equal: 5 less: check6 greater:check6 } > Number
-    check4: [c, "4"] > Compare'Number'{equal: 4 less: check5 greater:check5 } > Number
-    check3: [c, "3"] > Compare'Number'{equal: 3 less: check4 greater:check4 } > Number
-    check2: [c, "2"] > Compare'Number'{equal: 2 less: check3 greater:check3 } > Number
-    check1: [c, "1"] > Compare'Number'{equal: 1 less: check2 greater:check2 } > Number
-    check0: [c, "0"] > Compare'Number'{equal: 0 less: check1 greater:check1 } > Number
-    
+DataType is GenericType, SubType
+SubType is Literal, SubType
+GenericType is Literal
+
+Parser'DataType' from [A]Parser(p):
     [
-        [n > Number, 10] > Product > Number,
-        check0
-    ] > Sum > Number > NumberStringFold
-    
-Factorial is Number:
-    [value, 0] > Compare'Number' {
-        equal: 1
-        less: 1
-        greater: [
-                    value,
-                    [
-                        value,
-                        1
-                    ] > Difference > Number > Factorial > Number
-                 ] > Product > Number
-    }
+        [
+            [
+                p > Parser'Literal' > Literal,
+                p > Parser'Literal' > Parser'SubType' > SubType
+            ] > SubType,
+            Nothing > GenericType
+        ] > DataType,
+        p > Parser'Literal' > Parser'SubType'
+    ] > Parser'DataType'
+
+Parser'SubType' from [A]Parser(p):
+    p > Parser'ClearedWhite' > IsQuote > Bit > Test'Parser'SubType'' {
+        false:
+            [
+                Nothing > SubType,
+                p
+            ] > Parser'SubType'
+        true:
+            [
+                [
+                    p > Parser'ClearedWhite' > NextParser'ClearedWhite' > Parser'ClearedWhite' > Parser'Literal' > Literal,
+                    p > Parser'ClearedWhite' > NextParser'ClearedWhite' > Parser'ClearedWhite' > Parser'Literal' > Parser'SubType' > SubType
+                ] > SubType,
+                p > Parser'ClearedWhite' > NextParser'ClearedWhite' > Parser'ClearedWhite' > Parser'Literal' > Parser'SubType'
+            ] > Parser'SubType'
+    } > Parser'SubType'
+
+Parser'GenericType' from [A]Parser(p):
+    p > Parser'ClearedWhite' > IsOpenSquareBrace > Bit > Test'Parser'GenericType'
+
+
+
+IsLiteralTerminator is Bit
+IsLiteralTerminator from [A]Parser(p):
+    [
+        [
+            p > IsWhiteSpace > Bit,
+            ["_", p > Character] > CompareBit > Bit
+        ] > BitOr > Bit,
+        p > IsQuote > Bit
+    ] > BitOr > Bit > IsLiteralTerminator
+
+IsWhiteSpace is Bit
+IsWhiteSpace from [A]Parser(p):
+    [" ", p > Character] > CompareBit > Bit > IsWhiteSpace
+
+IsQuote is Bit
+IsQuote from [A]Parser(p):
+    ["'", p > Character] > CompareBit > Bit > IsQuote
+
+CompareBit is Bit
+CompareBit from Character(c1), Character(c2):
+    [c1, c2] > Compare'Bit' {equal:1 less:0 greater:0} > Bit > CompareBit
+
+IsOpenSquareBrace is Bit
+IsOpenSquareBrace from [A]Parser(p):
+    ["[", p > Character] > CompareBit > Bit > IsOpenSquareBrace
 </textarea>
 <textarea id="inputBytecode" rows=50 cols=100>
 Conversion>Number,Sum
@@ -362,26 +360,7 @@ EXIT>
 <script>
     window.onload = function()
     {
-    
-    
-        var code = [
-                "Conversion>[A],[B]List,Apple",
-                "Hint>Stuff",
-                "SubConversion>a",
-                "Enter>Sum,Number,[B]",
-                "Number>4",
-                "Param>0",
-                "Call>Sum,Number,[B]",
-                "Enter>[A],Test",
-                "Param>0",
-                "Call>[A],Test"
-                ];
-                
-        var relocation = generic_match("Number,Apple,List'ANumber'", "[A],[B]List,Apple");
-        var built = build_conversion(new DataStore(), "Number,Apple,List'ANumber'", relocation, code, 0);
-    
-    
-        document.getElementById("code").value += List_CPS + String_CPS;
+        document.getElementById("code").value += List_CPS + String_CPS + Bool_CPS;
         
         LOG(["RUNNING SANITY CHECKS"]);
         LOG("The following output is the result of running some weird Composed code that");
@@ -400,6 +379,7 @@ EXIT>
     
         var code = document.getElementById("code").value;
         document.getElementById("output").value = "";
+        
         Data = new DataStore();
         Data.JITName = js_conversion_rename;
         

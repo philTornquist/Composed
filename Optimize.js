@@ -114,6 +114,17 @@ function reorder_answers(Data, conversion, bytecode, i)
     return nc;
 }
 
+function tail_call_optimization(Data, conversion, bytecode, i)
+{
+    if (!Data.Hints[conversion].TailRecursive) return bytecode;
+    var nc = [];
+    
+    nc.push(bytecode[0]);
+    nc.push("Loop>");
+    
+    
+}
+
 function inline_conversions(Data, conversion, bytecode, i)
 {
     var nc = [];
