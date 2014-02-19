@@ -89,3 +89,4 @@ Count from [A](x), Count(c):                                           \n\
    [1, c > Number] > Sum > Number > Count                              \n"
 
     
+var List_Library = List_CPS + Foldr_CPS + Foldl_CPS + Map_CPS + Filter_CPS + Count_CPS;

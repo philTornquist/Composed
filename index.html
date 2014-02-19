@@ -369,14 +369,14 @@ EXIT>
         log_jitting                 = NLOG;
         log_passes                  = NLOG;
     
-        document.getElementById("code").value += List_CPS + String_CPS;
+        document.getElementById("code").value += List_Library + String_CPS;
         
         LOG(["RUNNING SANITY CHECKS"]);
         LOG("The following output is the result of running some weird Composed code that");
         LOG("verifies the compiler, optimizer, and runtime are working correctly\n\n");
         LOG("Press the 'Run' button to see the sample code run");
         LOG([]);
-        Test_JSCompiler();
+        Run_Tests();
     }
     
     function clickedRun()
