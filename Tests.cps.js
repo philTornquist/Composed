@@ -1,7 +1,7 @@
 var TEST_CODE = 
 [
-'test = Point2D,X,Y 1,2:',
-'test = Summation,List\'Number\' [[[Nothing,3],2],1]:',
+'testinline = Point2D,X,Y 1,2:',
+'testinline = Summation,List\'Number\' [[[Nothing,3],2],1]:',
 
 'Point2D from Number(x), -SelectorType(t):',
 '   [x, 20, t] > Point2D',
@@ -32,13 +32,13 @@ var TEST_CODE =
 'Point2D from Number(x), Number(y):',
 '	[x > X, y > Y] > Point2D',
 
-'TestingNothingReturn is Number
+'TestingNothingReturn is Number',
 'TestingNothingReturn from Number(L), Number(k), Number(s):',
 '	Nothing > Sum > Number > Number > Number > Number',
 
 'TestingAnswer is Number',
 'TestingAnswer from Number(l), Number(k):',
-'	l > Number{ignored:[l,l]>Sum used:[k,k]>Sum}',
+'	l > TestingAsk{ignored:[l,l]>Sum used:[k,k]>Sum}',
 
 'TestingAsk is Number',
 'TestingAsk from Number(a):',
