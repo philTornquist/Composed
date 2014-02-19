@@ -58,7 +58,7 @@ function Test_JSCompiler()
     function std(l){var m=0;for(var i=0;i<l.length;i++)m+=l[i];m/=i;var n=[];for(i=0;i<l.length;i++)n.push((l[i]-m)*(l[i]-m));var s=0;for(i=0;i<n.length;i++)s+=n[i];return Math.sqrt(s/(l.length-1));}
 
     
-    check(  23,                                   "X,Y",                                                    [3]);
+    check(  23,                                   "TestingSpecification,Number",                            [3]);
     check(  [1,2],                                "Point2D,-Type,Number,Number",                            ["Type-Selector",1,2]);
     check(  [1,20],                               "Point2D,-Type,Number",                                   ["Type-Selector",1]);
     check(  [5,23],                               "TestingExists,Number",                                   [5]);
