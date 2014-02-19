@@ -361,7 +361,7 @@ function ConstantConversion(constantStr) {
                 return "Nothing>\n";
             }
         }
-        else if (constantStr[1] == '"') {
+        else if (constantStr[0] == '"') {
             this.type = "Character";
             this.pseudocode = function() {
                 return "Character>" + constantStr.substring(1, constantStr.length-1) + "\n";

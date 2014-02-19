@@ -356,13 +356,6 @@ EXIT>
     window.onload = function()
     {
         document.getElementById("code").value += List_CPS + String_CPS + Bool_CPS;
-        
-        LOG(["RUNNING SANITY CHECKS"]);
-        LOG("The following output is the result of running some weird Composed code that");
-        LOG("verifies the compiler, optimizer, and runtime are working correctly\n\n");
-        LOG("Press the 'Run' button to see the sample code run");
-        LOG([]);
-        Test_JSCompiler();
     }
     
     function clickedRun()
@@ -379,8 +372,8 @@ EXIT>
         Data.JITName = js_conversion_rename;
         
         var conversions = compile(code);
-        load_bytecode(Data, conversions);
-        load_bytecode(Data, document.getElementById("inputBytecode").value);
+        load_pseudocode(Data, conversions);
+        load_pseudocode(Data, document.getElementById("inputBytecode").value);
         
         
         document.getElementById("bytecode").value = conversions;

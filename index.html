@@ -401,7 +401,7 @@ EXIT>
         log_loaded_generics         = NLOG;
         log_loaded_selectors        = NLOG;
     
-        document.getElementById("code").value += List_Library + String_CPS;
+        document.getElementById("input_composed").value += List_Library + String_CPS;
         
         LOG(["RUNNING SANITY CHECKS"]);
         LOG("The following output is the result of running some weird Composed code that");
@@ -430,29 +430,39 @@ EXIT>
         Data = new DataStore();
         Data.JITName = js_conversion_rename;
         
-        load_bytecode(Data, compile(document.getElementById("input_composed").value));
-        load_bytecode(Data, document.getElementById("inputBytecode").value);
+        load_pseudocode(Data, compile(document.getElementById("input_composed").value));
+        load_pseudocode(Data, document.getElementById("input_pseudo").value);
         
+        log_loaded_conversions(["LOADED: Conversions"]);
+        for (var key in Data.Conversions) log_loaded_conversions(key);
+        log_loaded_conversions([]);
         
+        log_loaded_generics(["LOADED: Generics"]);
+        for (var key in Data.Generics) log_loaded_generics(key);
+        log_loaded_generics([]);
+        
+        log_loaded_selectors(["LOADED: Selectors"]);
+        for (var key in Data.Selectors) { log_loaded_selectors([key]); for(var sel in Data.Selectors[key]) log_loaded_selectors(sel); log_loaded_selectors([]); }
+        log_loaded_selectors([]);
         
         link_conversions(Data);
 
         var pseudocode = "";
         var jscode = "";
         
-        var opt_pseudo = Data.PassesCompiled[Data.Pseudo_Pass.length-1];
+        var opt_pseudo = Data.PassCompiled[Data.Pseudo_Pass.length-1];
         for (var conv in opt_pseudo)
         {
-            pseudocode += opt_pseudo[conv];
+            pseudocode += opt_pseudo[conv].join('\n') + "\n\n";
         }
-        var js = Data.PassesCompiled[Data.Pseudo_Pass.length+Data.JS_Pass.length-1]
+        var js = Data.PassCompiled[Data.Pseudo_Pass.length+Data.JS_Pass.length-1]
         for (var conv in js)
         {
-            jscode += js[conv].toString();
+            jscode += js[conv].toString().replace("anonymous",Data.JITName(conv)) + "\n\n";
         }
 
         document.getElementById("optimized_pseudo").value = pseudocode;
-        document.getElementById("jsCode").value = jscode;
+        document.getElementById("compiled_javascript").value = jscode;
         
         var missingMsg = "";
         for (var key in Data.Missing)
