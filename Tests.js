@@ -6,7 +6,6 @@ function Run_Tests()
         
         var funct = CALL(Data, conv);
         var test = funct.apply(Data.JITed, params);
-        console.log(test);
         test = test ? test : "Nothing";
         if ("" + result === "" + test) LOG("Test Passed! " + result + " = " + conv + params);
         else { failed++;
@@ -33,7 +32,7 @@ function Run_Tests()
     check(  "Nothing",                            "TestingNothingReturn,Number,Number,Number",              [1,2,3]);
     check(  12,                                   "TestingAnswer,Number,Number",                            [5,6]);
     check(  [1,2],                                "Point2D,Number,Number",                                  [1,2]);
-    check(  ["Nothing", 5],                       "Point2D,Number,Number,Number",                           [5,6,7]);
+    check(  ["Nothing", 5],                       "TestingNothingInDataStructure,Number,Number,Number",     [5,6,7]);
     check(  5,                                    "Y,Point2D",                                              [["Nothing",5]]);
     check(  "Nothing",                            "X,Point2D",                                              [["Nothing",5]]);
     check(  [10,20],                              "TestingInjection,Number,Number,Point2D",                 [10,20,[1,2]]); 
@@ -48,7 +47,7 @@ function Run_Tests()
     check(  4,                                    "Count,List'Number'",                                     [make_list([1,2,3,4], 'L')]);
     check(  2.5,                                  "Average,List'Number'",                                   [make_list([1,2,3,4], 'L')]);
     check(  std([1,2,3,4]),                       "STD,List'Number'",                                       [make_list([1,2,3,4], 'L')]);
-	check(  std(listTo(500)),                     "STD,List'Number'",                                       [make_list(listTo(500), 'L')]);
+	check(  std(listTo(300)),                     "STD,List'Number'",                                       [make_list(listTo(300), 'L')]);
 	
     LOG(failed !== 0 ? "Tests Failed " + failed : "Tests Complete!");
     LOG("\n");

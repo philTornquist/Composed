@@ -361,24 +361,13 @@ EXIT>
 <script>
     window.onload = function()
     {
-    
-    
-        var code = [
-                "Conversion>[A],[B]List,Apple",
-                "Hint>Stuff",
-                "SubConversion>a",
-                "Enter>Sum,Number,[B]",
-                "Number>4",
-                "Param>0",
-                "Call>Sum,Number,[B]",
-                "Enter>[A],Test",
-                "Param>0",
-                "Call>[A],Test"
-                ];
-                
-        var relocation = generic_match("Number,Apple,List'ANumber'", "[A],[B]List,Apple");
-        var built = build_conversion(new DataStore(), "Number,Apple,List'ANumber'", relocation, code, 0);
-    
+        log_compiler_conversions    = NLOG;
+
+        log_linking                 = NLOG;
+        log_linker_restructure      = NLOG;
+        log_missing                 = NLOG;
+        log_jitting                 = NLOG;
+        log_passes                  = NLOG;
     
         document.getElementById("code").value += List_CPS + String_CPS;
         

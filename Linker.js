@@ -1,6 +1,8 @@
+var log_linking = LOG;
 var log_linker_restructure = NLOG;
 var log_missing = NLOG;
 var log_jitting = NLOG;
+var log_passes = NLOG;
 
 function DataStore()
 {
@@ -37,6 +39,52 @@ function DataStore()
         JS_insert_commas,
         JS_compile
     ];
+}
+
+function JIT(Data)
+{
+    log_jitting(["JITTING"]);
+    
+    for (var i = 0; i < Data.Passes.length; i++)
+    {
+        var pass = Data.Passes[i];
+        Data.CurrentPass = i;
+        if (Data.PassCompiled.length <= i) Data.PassCompiled.push({});
+        
+        for (var conversion in Data.Conversions)
+        {
+            if (Data.JITed[Data.JITName(conversion)] !== undefined)
+                continue;
+            
+            var bc = i >= 1 ? Data.PassCompiled[i-1][conversion] : Data.Conversions[conversion];
+        
+            Data.PassCompiled[i][conversion] = (bc instanceof Function) ? bc : pass(Data, conversion, bc, 0);
+        }
+    }
+    
+    for (var conversion in Data.PassCompiled[0])
+    {
+        log_passes(["Compiled: " + conversion]);
+        if (!(Data.PassCompiled[0][conversion] instanceof Function))
+        {
+            for (var i = 0; i < Data.Passes.length - 1; i++)
+            {
+                log_passes([conversion + " Pass: " + i]);
+                log_passes(Data.PassCompiled[i][conversion].join("\n"));
+                log_passes([]);
+            }
+        }
+        else
+        {
+            log_passes("FUNCTION");
+        }
+        log_passes([]);
+    }
+    
+    for (var conversion in Data.PassCompiled[Data.PassCompiled.length-1])
+        Data.JITed[Data.JITName(conversion)] = Data.PassCompiled[Data.PassCompiled.length-1][conversion];
+    
+    log_jitting([]);
 }
 
 function load_bytecode(Data, bytecode)
@@ -109,6 +157,7 @@ function load_conversion(Data, conversion, bytecode)
 //  Links all loaded conversions
 function link_conversions(Data)
 {
+    log_linking(["LINKING..."]);
     //  False when nothing happened in one iteration of the while loop
 	var notDone = true;
     var missing = false;
@@ -139,6 +188,7 @@ function link_conversions(Data)
 
                 //  Match failed
     			if (!relocation) continue;
+                log_linking(conversion);
 
     			notDone = true;
 
@@ -168,6 +218,8 @@ function link_conversions(Data)
                 missing = true;
     	}
 	}
+    log_linking("COMPLETED");
+    log_linking([]);
     
     if (missing)
     {
@@ -178,35 +230,7 @@ function link_conversions(Data)
     }
     else
     {
-        log_jitting(["JITTING"]);
-        
-        document.getElementById("bytecode").value = "";
-        
-        for (var i = 0; i < Data.Passes.length; i++)
-        {
-            var pass = Data.Passes[i];
-            Data.CurrentPass = i;
-            if (Data.PassCompiled.length <= i) Data.PassCompiled.push({});
-            
-            for (var conversion in Data.Conversions)
-            {
-                if (Data.JITed[Data.JITName(conversion)] !== undefined)
-                    continue;
-                
-                var bc = i >= 1 ? Data.PassCompiled[i-1][conversion] : Data.Conversions[conversion];
-            
-                Data.PassCompiled[i][conversion] = (bc instanceof Function) ? bc : pass(Data, conversion, bc, 0);
-            }
-        }
-        
-        for (var conversion in Data.PassCompiled[1])
-            if (!( Data.PassCompiled[1][conversion] instanceof Function))
-            document.getElementById("bytecode").value += Data.PassCompiled[1][conversion].join("\n") + "\n\n";
-        
-        for (var conversion in Data.PassCompiled[Data.PassCompiled.length-1])
-            Data.JITed[Data.JITName(conversion)] = Data.PassCompiled[Data.PassCompiled.length-1][conversion];
-        
-        log_jitting([]);
+        JIT(Data);
     }
 }
 

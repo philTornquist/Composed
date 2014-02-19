@@ -1,6 +1,3 @@
-var log_js_execution = NLOG;
-var log_js_compilation = log_jitting == NLOG ? NLOG: NLOG;
-
 function js_conversion_rename(conversion) {
     return conversion.replace(/'/g,"_").replace(/,/g,"$").replace(/-/g,"_$_");
 }
@@ -273,7 +270,9 @@ function JS_compile(Data, conversion, bytecode, i)
         }
     }
      
-    document.getElementById("jsCode").value += "function " + conversion + "(" + arguments + ") {\n" + jsString + "\n}\n\n";
+    log_jitting(["JS: " + conversion])
+    log_jitting("function " + conversion + "(" + arguments + ") {\n" + jsString + "\n}\n\n");
+    log_jitting([]);
              
     return new Function(arguments, jsString);
 }

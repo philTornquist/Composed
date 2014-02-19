@@ -9,7 +9,13 @@ load('Linker.js')
 load('Optimize.js')
 load('JSCompiler.js')
 
+log_compiler_conversions    = LOG;
 
+log_linking                 = LOG;
+log_linker_restructure      = LOG;
+log_missing                 = LOG;
+log_jitting                 = LOG;
+log_passes                  = LOG;
 
 
 var indexFile = read("index.html")
@@ -19,6 +25,9 @@ var built_in = indexFile.substring(start_of_bytecode, indexFile.indexOf("</", st
 
 
 var Data = new DataStore();
+
+Data.JITName = js_conversion_rename;
+
 var conversions = compile(TEST_CODE + List_CPS);
 
 load_bytecode(Data, conversions);
