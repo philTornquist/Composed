@@ -34,7 +34,7 @@ var TEST_CODE =
 
 'TestingNothingReturn is Number',
 'TestingNothingReturn from Number(L), Number(k), Number(s):',
-'	Nothing > Sum > Number > Number > Number > Number',
+'	Nothing > Sum > Number',
 
 'TestingAnswer is Number',
 'TestingAnswer from Number(l), Number(k):',
@@ -50,7 +50,7 @@ var TEST_CODE =
 
 'TestingNothingInDataStructure is Point2D',
 'TestingNothingInDataStructure from Number(l), Number(i), Number(k):',
-'	[l > Y, [l,l,l] > Number > X] > Point2D',
+'	[l > Y, [l,l,l] > TestingNothingReturn > Number > X] > Point2D',
 
 'TestingInjection is Point2D',
 'TestingInjection from Point2D(l), Number(x), Number(y):',
@@ -62,8 +62,8 @@ var TEST_CODE =
 '[P]TestingGeneric from X(s), [P](l), Number(j), [P]List(k):',
 '	[l, k] > [P]List',
 
-'[A]TestingListBuild is [A]List',
-'TestingListBuild\'Number\' from Number(a), Number(b):',
+'TestingListBuild is List\'Number\'',
+'TestingListBuild from Number(a), Number(b):',
 '	[a, [b, Nothing > List\'Number\'] > List\'Number\'] > List\'Number\'',
 
 'Sum from Sum(a), Number(b):',
