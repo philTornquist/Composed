@@ -83,7 +83,7 @@ function parse(str) {
         try {
             var stuff = parseElement(code);
         } catch (e) {
-            alert(e + code.hereBack() + "<ERROR|" + code.hereForward().substring(7));
+            LOG(e + code.hereBack() + "<ERROR|" + code.hereForward().substring(7));
             return [[],[]];
         }
         for (var i = 0; i < stuff[0].length; i++) {

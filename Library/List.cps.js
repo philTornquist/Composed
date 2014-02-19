@@ -1,6 +1,7 @@
 var List_CPS = "\
-[A]List is [A], [A]List                                                \n\
-                                                                       \n\
+[A]List is [A], [A]List                                                \n"
+
+var Foldr_CPS = "\
 [A]Foldr is [A]                                                        \n\
 [A]Foldr from [B]List(l), [A](b):                                      \n\
 l > [A]Exists {                                                        \n\
@@ -13,8 +14,9 @@ l > [A]Exists {                                                        \n\
        l > [B]                                                         \n\
    ] > [A]                                                             \n\
    no: b                                                               \n\
-   } > [A] > [A]Foldr                                                  \n\
-                                                                       \n\
+   } > [A] > [A]Foldr                                                  \n"
+
+var Foldl_CPS = "\
 [A]Foldl is [A]                                                        \n\
 [A]Foldl from [B]List(l), [A](b):                                      \n\
 l > [A]Exists {                                                        \n\
@@ -27,8 +29,9 @@ l > [A]Exists {                                                        \n\
        l > [B]List                                                     \n\
    ] > [A]Foldl                                                        \n\
    no: b                                                               \n\
-} > [A] > [A]Foldl                                                     \n\
-                                                                       \n\
+} > [A] > [A]Foldl                                                     \n"
+
+var Map_CPS = "\
 [A]Map is [A]List                                                      \n\
 [A]Map from [B]Map(m):                                                 \n\
    m > [B]List > [A]Map                                                \n\
@@ -57,9 +60,9 @@ l > [A]Exists'Map' {                                                   \n\
         ] > [A]Map > [A]List                                           \n\
     ] > [A]List > [A]Map                                               \n\
     no: Nothing                                                        \n\
-}                                                                      \n\
-                                                                       \n\
-                                                                       \n\
+}                                                                      \n"
+
+var Filter_CPS = "\
 [A]Filter is [A]List                                                   \n\
 [A]Filter from [B]List(l):                                             \n\
     [                                                                  \n\
@@ -72,8 +75,9 @@ l > [A]Exists'Map' {                                                   \n\
    v > [A]Exists {                                                     \n\
        yes: [v, l > [A]List] > [A]List > [A]FilterCheck                \n\
        no: l                                                           \n\
-   }                                                                   \n\
-                                                                       \n\
+   }                                                                   \n"
+
+var Count_CPS = "\
 Count is Number                                                        \n\
 Count from [A]List(l):                                                 \n\
    [                                                                   \n\
@@ -82,7 +86,6 @@ Count from [A]List(l):                                                 \n\
    ] > Foldl'Count' > Count                                            \n\
                                                                        \n\
 Count from [A](x), Count(c):                                           \n\
-   [1, c > Number] > Sum > Number > Count                              \n\
-"
+   [1, c > Number] > Sum > Number > Count                              \n"
 
     
