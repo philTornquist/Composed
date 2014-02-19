@@ -54,62 +54,45 @@ function ConversionDefinition(type, output, inputs, selectors, bytecode) {
 }
 
 function compile(str) {
-    var convs = parse(str);
-    var bc = "";
-    for (var i = 0; i < convs[0].length; i++)
-    {
-        bc += convs[0][i].bytecode + "\n";
-    }
-    for (var i = 0; i < convs[1].length; i++)
-    {
-        bc += "Inline>" + convs[1][i] + "\n";
-    }
-    return bc;
-}
-
-function parse(str) {
     var code = new CodeDef(str);
-    var conversions = [];
-    var impures = [];
+    var pseudocode = "";
+    var conversions = 0;
+    var inlines = 0;
 
-    log_compiler_conversions(["Compiled Conversions"]);
+    LOG("Compiling...");
 
-    log_compiler_conversions("");
-    log_compiler_conversions(str);
-    log_compiler_conversions("");
-    
     code.clearWhite();
     while (!code.done()) {
         try {
-            var stuff = parseElement(code);
+            var res = parseElement(code);
+            pseudocode += res[0];
+            conversions += res[1];
+            inlines += res[2];
         } catch (e) {
             LOG(e + code.hereBack() + "<ERROR|" + code.hereForward().substring(7));
             return [[],[]];
-        }
-        for (var i = 0; i < stuff[0].length; i++) {
-            conversions.push(stuff[0][i]);
-            log_compiler_conversions([stuff[0][i].name]);
-            log_compiler_conversions(stuff[0][i].bytecode);
-            log_compiler_conversions([]);
-        };
-        for (var i = 0; i < stuff[1].length; i++) {
-            impures.push(stuff[1][i]);
         }
         code.clearWhite();
     }
 
     log_compiler_conversions([]);
 
-    return [conversions, impures];
+    LOG("Compiled! " + conversions + " Conversions and " + inlines + " Inline Calls");
+
+    return pseudocode;
 }
 
 function parseElement(code) {
 
-    var conversions = [];
+    var pseudocode = "";
+    var conversions = 0;
+    var inlines = 0;
+    var start_index = code.index;
+
     var add = function(type, output, inputs, selectors, bytecode) {
-        conversions.push(new ConversionDefinition(type, output, inputs, selectors, bytecode));
+        pseudocode += new ConversionDefinition(type, output, inputs, selectors, bytecode).bytecode + "\n";
+        conversions++;
     }
-    var impures = [];
 
     var genericVar_MAP_name = {};
     var output = parseConversionType(code, genericVar_MAP_name);
@@ -171,7 +154,7 @@ function parseElement(code) {
                             bytecode);    
                     }
                     else {
-                        bytecode = "Data Structure>1";
+                        bytecode = "Data Structure>1\n";
                         
                         add("Conversion",
                             output,
@@ -188,7 +171,7 @@ function parseElement(code) {
                         output,
                         types,
                         [],
-                        "Data Structure>" + types.length);
+                        "Data Structure>" + types.length + "\n");
                    break;
             }
 
@@ -337,10 +320,20 @@ function parseElement(code) {
             var data = "";
             while (code.get() != ':') { data += code.get(); code.next(); }
             code.next();
-            impures.push(output + "=" + call.join(',') + "<" + data);
+            pseudocode += "Inline>" + output + "=" + call.join(',') + "<" + data + "\n";
+            inlines++;
     }
 
-    return [conversions, impures];
+    log_compiler_conversions(["Compiled Element"]);
+    log_compiler_conversions(["Source Code"]);
+    log_compiler_conversions(code.str.substring(start_index, code.index).replace(/^\n*$/g,""));
+    log_compiler_conversions([]);
+    log_compiler_conversions(["Pseudo Code"]);
+    log_compiler_conversions(pseudocode.replace(/^\n*$/g,""));
+    log_compiler_conversions([]);
+    log_compiler_conversions([]);
+
+    return [pseudocode, conversions, inlines];
 }
 
 function VariableConversion(varNumber, type) {
@@ -368,7 +361,7 @@ function ConstantConversion(constantStr) {
                 return "Nothing>\n";
             }
         }
-        else if (constantStr[0] == '"') {
+        else if (constantStr[1] == '"') {
             this.type = "Character";
             this.bytecode = function() {
                 return "Character>" + constantStr.substring(1, constantStr.length-1) + "\n";

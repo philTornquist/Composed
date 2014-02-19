@@ -10,6 +10,155 @@ Enter | ENTER | Element | Param | Character | Number | Ask | Sub | Selector
 
 */
 
+var NONE = '';
+var NOTHING = "" +
+"Conversion>[A],Nothing\n"+
+"Nothing>\n";
+
+var EXISTS = "" +
+"Conversion>[A],[A]Exists\n"+
+"Element>0\n"+
+"Param>0\n"+
+"Extract>0\n"+
+"\n"+
+"Specification>[B]Exists,[A]\n"+
+"ENTER>\n"+
+"IGNORE>(\n"+
+"Param>0\n"+
+"IGNORE> !== \"Nothing\" ? \n"+
+"Ask>yes\n"+
+"IGNORE> : \n"+ 
+"Ask>no\n"+
+"IGNORE>)\n"+
+"EXIT>\n";
+
+var SUM = "" + 
+"Conversion>Number,Sum\n"+
+"Element>0\n"+
+"Param>0\n"+
+"Extract>0\n"+
+"\n"+
+"Conversion>Sum,Number\n"+
+"Data Structure>1\n"+
+"\n"+
+"Conversion>Sum,Number,Number\n"+
+"ENTER>\n"+
+"IGNORE>(\n"+
+"Param>0\n"+
+"IGNORE> + \n"+
+"Param>1\n"+
+"IGNORE>)\n"+
+"EXIT>\n";
+
+var DIFFERENCE = "" + 
+"Conversion>Number,Difference\n"+
+"Element>0\n"+
+"Param>0\n"+
+"Extract>0\n"+
+"\n"+
+"Conversion>Difference,Number\n"+
+"Data Structure>1\n"+
+"\n"+
+"Conversion>Difference,Number,Number\n"+
+"ENTER>\n"+
+"IGNORE>(\n"+
+"Param>0\n"+
+"IGNORE> - \n"+
+"Param>1\n"+
+"IGNORE>)\n"+
+"EXIT>\n";
+
+var QUOTIENT = "" + 
+"Conversion>Quotient,Number\n"+
+"Data Structure>1\n"+
+"\n"+
+"Conversion>Number,Quotient\n"+
+"Element>0\n"+
+"Param>0\n"+
+"Extract>0\n"+
+"\n"+
+"Conversion>Quotient,Number,Number\n"+
+"ENTER>\n"+
+"IGNORE>(\n"+
+"Param>0\n"+
+"IGNORE> / \n"+
+"Param>1\n"+
+"IGNORE>)\n"+
+"EXIT>\n";
+
+var SQUARE = "" + 
+"Conversion>Number,Square\n"+
+"Element>0\n"+
+"Param>0\n"+
+"Extract>0\n"+
+"\n"+
+"Specification>Square,Number\n"+
+"ENTER>\n"+
+"IGNORE>(\n"+
+"Param>0\n"+
+"IGNORE> * \n"+
+"Param>0\n"+
+"IGNORE>)\n"+
+"EXIT>\n";
+
+var SQRT = "" + 
+"Conversion>Number,SquareRoot\n"+
+"Element>0\n"+
+"Param>0\n"+
+"Extract>0\n"+
+"\n"+
+"Specification>SquareRoot,Number\n"+
+"ENTER>\n"+
+"IGNORE>Math.sqrt(\n"+
+"Param>0\n"+
+"IGNORE>)\n"+
+"EXIT>\n";
+    
+var COMPARE = "" +
+"Conversion>[A]Compare,[A]\n"+
+"Data Structure>1\n"+
+"\n"+
+"Conversion>[A],[A]Compare\n"+
+"Element>0\n"+
+"Param>0\n"+
+"Extract>0\n"+
+"\n"+
+"Conversion>[A]Compare,Character,Character\n"+
+"ENTER\n"+
+"Param>0\n"+
+"IGNORE> < \n"+
+"Param>1\n"+
+"IGNORE> ? \n"+
+"Ask>less\n"+
+"IGNORE> : (\n"+
+"Param>0\n"+
+"IGNORE> == \n"+
+"Param>1\n"+
+"IGNORE> ? \n"+
+"Ask>equal\n"+
+"IGNORE> : \n"+
+"Ask>greater\n"+
+"IGNORE>)\n"+
+"EXIT>\n"+
+"\n"+
+"Conversion>[A]Compare,Number,Number\n"+
+"ENTER>\n"+
+"Param>0\n"+
+"IGNORE> < \n"+
+"Param>1\n"+
+"IGNORE> ? \n"+
+"Ask>less\n"+
+"IGNORE> : (\n"+
+"Param>0\n"+
+"IGNORE> == \n"+
+"Param>1\n"+
+"IGNORE> ? \n"+
+"Ask>equal\n"+
+"IGNORE> : \n"+
+"Ask>greater\n"+
+"IGNORE>)\n"+
+"EXIT>\n";
+
 
 function BCins(bytecode)
 {

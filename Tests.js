@@ -1,207 +1,89 @@
+var log_loaded_conversions = NLOG;
+var log_loaded_generics = NLOG;
+var log_loaded_selectors = NLOG;
+
+var Tests = {};
+
+function make_list(list, LorR) {
+    return LorR == 'L' ?
+        [         list.length == 1 ? "Nothing" : make_list(list.slice(1,list.length), LorR), list[0]] :
+        [list[0], list.length == 1 ? "Nothing" : make_list(list.slice(1,list.length), LorR)];
+}
+
+function listTo(val) {var r=[];for(var i=0;i<val;i++)r.push(i);return r;}
+function std(l){var m=0;for(var i=0;i<l.length;i++)m+=l[i];m/=i;var n=[];for(i=0;i<l.length;i++)n.push((l[i]-m)*(l[i]-m));var s=0;for(i=0;i<n.length;i++)s+=n[i];return Math.sqrt(s/(l.length-1));}
+function test(test, conv, params, result, pseudocode, cps)
+{
+//    if (!test) { Tests[conv] = false; return; }
+    var res = {};
+    res.conversion = conv;
+    res.params = params;
+    res.result = result;
+    res.pseudocode = pseudocode;
+    res.composedcode = cps;
+
+    if (Tests[conv] !== undefined) 
+        throw "Test already defined: " + conv;
+    Tests[conv] = res;
+}
+
 function Run_Tests()
 {
+    LOG(["Testing"]);
     var failed = 0;
     var results = [];
-    function check(test, conv, params, result, pseudocode, cps) {
-        //if (!test) {LOG("SKIPPED: " + conv); return;}
+    for (var key in Tests)
+    {
+        var test = Tests[key];
+        if (!test) {LOG("SKIPPED: " + key); continue;}
         
-        Data = new DataStore();
+        var Data = new DataStore();
         Data.JITName = js_conversion_rename;
 
-        load_bytecode(Data, compile(cps));
-        load_bytecode(Data, pseudocode);
+        load_bytecode(Data, compile(test.composedcode));
+        load_bytecode(Data, test.pseudocode);
 
-        LOG(["LOADED: Conversions"]);
-        for (var key in Data.Conversions) LOG(key);
-        LOG([]);
+        log_loaded_conversions(["LOADED: Conversions"]);
+        for (var key in Data.Conversions) log_loaded_conversions(key);
+        log_loaded_conversions([]);
         
-        LOG(["LOADED: Generics"]);
-        for (var key in Data.Generics) LOG(key);
-        LOG([]);
+        log_loaded_generics(["LOADED: Generics"]);
+        for (var key in Data.Generics) log_loaded_generics(key);
+        log_loaded_generics([]);
         
-        LOG(["LOADED: Selectors"]);
-        for (var key in Data.Selectors) { LOG([key]); for(var sel in Data.Selectors[key]) LOG(sel); LOG([]); }
-        LOG([]);
+        log_loaded_selectors(["LOADED: Selectors"]);
+        for (var key in Data.Selectors) { log_loaded_selectors([key]); for(var sel in Data.Selectors[key]) log_loaded_selectors(sel); log_loaded_selectors([]); }
+        log_loaded_selectors([]);
         
         link_conversions(Data);
 
 
-        var funct = CALL(Data, conv);
-        var test = funct.apply(Data.JITed, params);
-        test = test ? test : "Nothing";
-        if ("" + result === "" + test) LOG("Test Passed! " + result + " = " + conv + params);
+        var funct = CALL(Data, test.conversion);
+        var tested = funct.apply(Data.JITed, test.params);
+        tested = tested ? tested : "Nothing";
+        if (test.result.toString() === tested.toString()) LOG("Test Passed! " + test.result + " = " + test.conversion + this.params);
         else { failed++;
-              LOG("Error with test [" + conv + "] expected " + result + " but got " + test + ". Parameters: " + params);
+              LOG("Error with test [" + test.conversion + "] expected " + test.result + " but got " + tested + ". Parameters: " + this.params);
         }
     }
+
+    LOG("\n");
+    LOG(failed !== 0 ? "Tests Failed " + failed : "Tests Complete!");
     
-    function make_list(list, LorR) {
-        return LorR == 'L' ?
-            [         list.length == 1 ? "Nothing" : make_list(list.slice(1,list.length), LorR), list[0]] :
-            [list[0], list.length == 1 ? "Nothing" : make_list(list.slice(1,list.length), LorR)];
-    }
-    
-    function listTo(val) {var r=[];for(var i=0;i<val;i++)r.push(i);return r;}
-    function std(l){var m=0;for(var i=0;i<l.length;i++)m+=l[i];m/=i;var n=[];for(i=0;i<l.length;i++)n.push((l[i]-m)*(l[i]-m));var s=0;for(i=0;i<n.length;i++)s+=n[i];return Math.sqrt(s/(l.length-1));}
-
-var NONE = '';
-var NOTHING = "" +
-"Conversion>[A],Nothing\n"+
-"Nothing>\n";
-
-var EXISTS = "" +
-"Conversion>[A],[A]Exists\n"+
-"Element>0\n"+
-"Param>0\n"+
-"Extract>0\n"+
-"\n"+
-"Specification>[B]Exists,[A]\n"+
-"ENTER>\n"+
-"IGNORE>(\n"+
-"Param>0\n"+
-"IGNORE> !== \"Nothing\" ? \n"+
-"Ask>yes\n"+
-"IGNORE> : \n"+ 
-"Ask>no\n"+
-"IGNORE>)\n"+
-"EXIT>\n";
-
-var SUM = "" + 
-"Conversion>Number,Sum\n"+
-"Element>0\n"+
-"Param>0\n"+
-"Extract>0\n"+
-"\n"+
-"Conversion>Sum,Number\n"+
-"Data Structure>1\n"+
-"\n"+
-"Conversion>Sum,Number,Number\n"+
-"ENTER>\n"+
-"IGNORE>(\n"+
-"Param>0\n"+
-"IGNORE> + \n"+
-"Param>1\n"+
-"IGNORE>)\n"+
-"EXIT>\n";
-
-var DIFFERENCE = "" + 
-"Conversion>Number,Difference\n"+
-"Element>0\n"+
-"Param>0\n"+
-"Extract>0\n"+
-"\n"+
-"Conversion>Difference,Number\n"+
-"Data Structure>1\n"+
-"\n"+
-"Conversion>Difference,Number,Number\n"+
-"ENTER>\n"+
-"IGNORE>(\n"+
-"Param>0\n"+
-"IGNORE> - \n"+
-"Param>1\n"+
-"IGNORE>)\n"+
-"EXIT>\n";
-
-var QUOTIENT = "" + 
-"Conversion>Quotient,Number\n"+
-"Data Structure>1\n"+
-"\n"+
-"Conversion>Number,Quotient\n"+
-"Element>0\n"+
-"Param>0\n"+
-"Extract>0\n"+
-"\n"+
-"Conversion>Quotient,Number,Number\n"+
-"ENTER>\n"+
-"IGNORE>(\n"+
-"Param>0\n"+
-"IGNORE> / \n"+
-"Param>1\n"+
-"IGNORE>)\n"+
-"EXIT>\n";
-
-var SQUARE = "" + 
-"Conversion>Number,Square\n"+
-"Element>0\n"+
-"Param>0\n"+
-"Extract>0\n"+
-"\n"+
-"Specification>Square,Number\n"+
-"ENTER>\n"+
-"IGNORE>(\n"+
-"Param>0\n"+
-"IGNORE> * \n"+
-"Param>0\n"+
-"IGNORE>)\n"+
-"EXIT>\n";
-
-var SQRT = "" + 
-"Conversion>Number,SquareRoot\n"+
-"Element>0\n"+
-"Param>0\n"+
-"Extract>0\n"+
-"\n"+
-"Specification>SquareRoot,Number\n"+
-"ENTER>\n"+
-"IGNORE>Math.sqrt(\n"+
-"Param>0\n"+
-"IGNORE>)\n"+
-"EXIT>\n";
-    
-var COMPARE = "" +
-"Conversion>[A]Compare,[A]\n"+
-"Data Structure>1\n"+
-"\n"+
-"Conversion>[A],[A]Compare\n"+
-"Element>0\n"+
-"Param>0\n"+
-"Extract>0\n"+
-"\n"+
-"Conversion>[A]Compare,Character,Character\n"+
-"ENTER\n"+
-"Param>0\n"+
-"IGNORE> < \n"+
-"Param>1\n"+
-"IGNORE> ? \n"+
-"Ask>less\n"+
-"IGNORE> : (\n"+
-"Param>0\n"+
-"IGNORE> == \n"+
-"Param>1\n"+
-"IGNORE> ? \n"+
-"Ask>equal\n"+
-"IGNORE> : \n"+
-"Ask>greater\n"+
-"IGNORE>)\n"+
-"EXIT>\n"+
-"\n"+
-"Conversion>[A]Compare,Number,Number\n"+
-"ENTER>\n"+
-"Param>0\n"+
-"IGNORE> < \n"+
-"Param>1\n"+
-"IGNORE> ? \n"+
-"Ask>less\n"+
-"IGNORE> : (\n"+
-"Param>0\n"+
-"IGNORE> == \n"+
-"Param>1\n"+
-"IGNORE> ? \n"+
-"Ask>equal\n"+
-"IGNORE> : \n"+
-"Ask>greater\n"+
-"IGNORE>)\n"+
-"EXIT>\n";
+    LOG([]);
+}
 
 
-    check(0,"TestingSpecification,Number",
+
+
+     test(0,"TestingSpecification,Number",
             [3],
             23,
             NONE,
             'TestingSpecification is Number:\n'+
             '   23'
             );
-    check(0,"Point2D,-SelectorType,Number,Number",
+    test(0,"Point2D,-SelectorType,Number,Number",
             ["SelectorType-Selector",1,2],
             [1,2],
             NONE,
@@ -211,7 +93,7 @@ var COMPARE = "" +
             'Point2D from Number(x), Number(y), Selector-SelectorType:\n'+
             '   [x > X, y > Y] > Point2D\n'
             );
-    check(0,"Point2D,-SelectorType,Number",
+    test(0,"Point2D,-SelectorType,Number",
             ["SelectorType-Selector",1],
             [1,20],
             NONE,
@@ -223,7 +105,7 @@ var COMPARE = "" +
             'Point2D from Number(x), -SelectorType(t):\n'+
             '   [x, 20, t] > Point2D\n' 
             );
-    check(0,"TestingExists,Number",
+    test(0,"TestingExists,Number",
             [5],
             5,
             NOTHING+
@@ -237,7 +119,7 @@ var COMPARE = "" +
             "       yes: 1\n" + 
             "   } > Number"
             );
-    check(0,"TestSelector,Point2D", 
+    test(0,"TestSelector,Point2D", 
             [[12,9]],
             [12,20],
             NONE,
@@ -249,7 +131,7 @@ var COMPARE = "" +
             "TestSelector is Point2D:\n"+
             "   [value > X > Number, 20, Selector-SelectorType] > Point2D"
             );
-    check(0,"TestingSubConversions,Number,Number,Number,Number", 
+    test(0,"TestingSubConversions,Number,Number,Number,Number", 
             [5,6,7,8],
             26,
             SUM,
@@ -259,7 +141,7 @@ var COMPARE = "" +
             "	b:	[h, l] > Sum > Number\n"+
             "	[a,b] > Sum"
             );
-    check(0,"TestingNothingReturn,Number,Number,Number",
+    test(0,"TestingNothingReturn,Number,Number,Number",
             [1,2,3],
             "Nothing",
             NOTHING,
@@ -267,7 +149,7 @@ var COMPARE = "" +
             "TestingNothingReturn from Number(L), Number(k), Number(s):\n"+
             "	Nothing > Number"
             );
-    check(0,"TestingAnswer,Number,Number",
+    test(0,"TestingAnswer,Number,Number",
             [5,6],
             12,
             SUM,
@@ -279,7 +161,7 @@ var COMPARE = "" +
             "TestingAsk from Number(a):\n"+
             "	{used Number}"
             );
-    check(0,"Point2D,Number,Number",
+    test(0,"Point2D,Number,Number",
             [1,2],
             [1,2],
             NONE,
@@ -289,7 +171,7 @@ var COMPARE = "" +
             "Point2D from Number(x), Number(y):\n"+
             "   [x > X, y > Y] > Point2D"
             );
-    check(0,"TestingNothingInDataStructure,Number",
+    test(0,"TestingNothingInDataStructure,Number",
             [5],
             [5,"Nothing"],
             NOTHING,
@@ -300,7 +182,7 @@ var COMPARE = "" +
             "TestingNothingInDataStructure from Number(x):\n"+
             "   [x > X, Nothing > Y] > Point2D"
             );
-    check(0,"Y,Point2D", 
+    test(0,"Y,Point2D", 
             [["Nothing",5]],
             5,
             NONE,
@@ -308,7 +190,7 @@ var COMPARE = "" +
             "X is Number\n"+
             "Y is Number\n"
             );
-    check(0,"X,Point2D",   
+    test(0,"X,Point2D",   
             [["Nothing",5]],
             "Nothing",
             NONE,
@@ -316,7 +198,7 @@ var COMPARE = "" +
             "X is Number\n"+
             "Y is Number\n"
             );
-    check(0,"TestingInjection,Number,Number,Point2D",
+    test(0,"TestingInjection,Number,Number,Point2D",
             [10,20,[1,2]],
             [10,20],
             NONE,
@@ -328,13 +210,13 @@ var COMPARE = "" +
             "	[(x > X -> (y > Y -> l)) > Y,\n"+
             "	(x > X -> (y > Y -> l)) > X] > Point2D\n"
             ); 
-    check(0,"List'Number',List'Number',Number",
+    test(0,"List'Number',List'Number',Number",
             ["Nothing",5],
             ["Nothing",5],
             NONE,
             List_CPS
             );
-    check(0,"TestingGeneric'Number',List'Number',Number,Number,X",
+    test(0,"TestingGeneric'Number',List'Number',Number,Number,X",
             ["Nothing", 17, 12, [5]],
             ["Nothing",17],
             NONE,
@@ -343,7 +225,7 @@ var COMPARE = "" +
             "[P]TestingGeneric from X(s), [P](l), Number(j), [P]List(k):\n"+
             "	[l, k] > [P]List"
             );
-    check(0,"TestingListBuild,Number,Number",     
+    test(0,"TestingListBuild,Number,Number",     
             [1,2],
             make_list([1,2], 'L'),
             NOTHING,
@@ -352,7 +234,7 @@ var COMPARE = "" +
             "TestingListBuild from Number(a), Number(b):\n"+
             "	[a, [b, Nothing > List'Number'] > List'Number'] > List'Number'"
             );
-    check(0,"Foldr'Sum',List'Number',Sum",
+    test(0,"Foldr'Sum',List'Number',Sum",
             [make_list([1,2,3,4], 'L'),0],
             10,
             SUM+
@@ -362,7 +244,7 @@ var COMPARE = "" +
             "Sum from Sum(s), Number(n):\n"+
             "   [s > Number, n] > Sum"
             );
-    check(0,"Foldl'Sum',List'Number',Sum", 
+    test(0,"Foldl'Sum',List'Number',Sum", 
             [make_list([1,2,3,4], 'L'),0],
             10,
             SUM+
@@ -372,7 +254,7 @@ var COMPARE = "" +
             "Sum from Sum(s), Number(n):\n"+
             "   [s > Number, n] > Sum"
             );
-    check(0,"Map'Point2D',List'Number'",   
+    test(0,"Map'Point2D',List'Number'",   
             [make_list([1,2], 'L')],
             make_list([[1,1],[2,2]], 'L'),
             EXISTS,
@@ -384,7 +266,7 @@ var COMPARE = "" +
             "Point2D from Number(n):\n"+
             "   [n > X, n > Y] > Point2D"
             );
-    check(0,"Filter'IsLessThan5',List'Number'",
+    test(0,"Filter'IsLessThan5',List'Number'",
             [make_list(["Nothing",1,"Nothing",2,"Nothing"], 'L')],
             make_list([1,2], 'R'),
             NOTHING+
@@ -399,7 +281,7 @@ var COMPARE = "" +
             "       less: value\n"+
             "   } > Number"
             );
-    check(0,"Summation,List'Number'",
+    test(0,"Summation,List'Number'",
             [make_list([1,2,3,4,5,6,7,8,9,10], 'L')],
             55,
             EXISTS+
@@ -415,7 +297,7 @@ var COMPARE = "" +
             "       [0,0] > Sum\n"+
             "   ] > Foldl'Sum' > Sum > Summation"
             );
-    check(0,"Count,List'Number'", 
+    test(0,"Count,List'Number'", 
             [make_list([1,2,3,4], 'L')],
             4,
             EXISTS+
@@ -424,7 +306,7 @@ var COMPARE = "" +
             Foldl_CPS+
             Count_CPS
             );
-    check(0,"Average,List'Number'", 
+    test(0,"Average,List'Number'", 
             [make_list([1,2,3,4], 'L')],
             2.5,
             EXISTS+
@@ -452,7 +334,7 @@ var COMPARE = "" +
             "       l > Count\n"+
             "   ] > Average\n"
             );
-    check(0,"STD,List'Number'",    
+    test(0,"STD,List'Number'",    
             [make_list([1,2,3,4], 'L')],
             std([1,2,3,4]),
             EXISTS+
@@ -495,7 +377,7 @@ var COMPARE = "" +
             "   ] > Quotient > Number > SquareRoot > Number > STD"
             );
 
-    check(0,"STD,List'Number'",    
+    test(0,"BigSTD,List'Number'",    
             [make_list(listTo(300), 'L')],
             std(listTo(300)),
             EXISTS+
@@ -535,11 +417,11 @@ var COMPARE = "" +
             "           l > Average > Number\n"+
             "       ] > Map'Difference' > Map'Number' > Map'Square' > Map'Number' > List'Number' > Summation > Sum > Number,\n"+
             "       [l > Count > Number, 1] > Difference > Number\n"+
-            "   ] > Quotient > Number > SquareRoot > Number > STD"
+            "   ] > Quotient > Number > SquareRoot > Number > STD\n"+
+
+            "BigSTD is STD\n"+
+            "BigSTD from List'Number'(l):\n"+
+            "   l > STD > BigSTD"
             );
 
-    LOG(failed !== 0 ? "Tests Failed " + failed : "Tests Complete!");
-    LOG("\n");
-    
-    LOG([]);
-}
+

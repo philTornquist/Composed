@@ -1,9 +1,8 @@
-load('Tests.js')
-load('Tests.cps.js')
-load('Library/List.cps.js')
 load('LogHistory.js')
-load('Bytecode.js')
 load('ConversionUtils.js')
+load('Pseudocode.js')
+load('Library/List.cps.js')
+load('Tests.js')
 load('Compiler.js')
 load('Linker.js')
 load('Optimize.js')
@@ -16,6 +15,10 @@ log_linker_restructure      = NLOG;
 log_missing                 = NLOG;
 log_jitting                 = NLOG;
 log_passes                  = NLOG;
+
+log_loaded_conversion       = NLOG;
+log_loaded_generics         = NLOG;
+log_loaded_selectors        = NLOG;
 
 
 var indexFile = read("index.html")

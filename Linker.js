@@ -19,6 +19,7 @@ function DataStore()
     this.Links            = {};     //  Mapping of conversion calls to their location in [Text]
     this.Missing          = {};
     
+    this.Tests            = {};
     this.ToRun            = [];     //  Contains all conversions to be run
     
     this.Passes           = [];
@@ -43,10 +44,11 @@ function DataStore()
 
 function JIT(Data)
 {
-    log_jitting(["JITTING"]);
+    LOG("JITing....");
     
     for (var i = 0; i < Data.Passes.length; i++)
     {
+        LOG("Pass: " + (i+1) + " of " + Data.Passes.length);
         var pass = Data.Passes[i];
         Data.CurrentPass = i;
         if (Data.PassCompiled.length <= i) Data.PassCompiled.push({});
@@ -81,10 +83,14 @@ function JIT(Data)
         log_passes([]);
     }
     
+    var conversion_count = 0;
     for (var conversion in Data.PassCompiled[Data.PassCompiled.length-1])
+    {
+        conversion_count++;
         Data.JITed[Data.JITName(conversion)] = Data.PassCompiled[Data.PassCompiled.length-1][conversion];
+    }
     
-    log_jitting([]);
+    LOG("JITed! " + conversion_count + " Conversions");
 }
 
 function load_bytecode(Data, bytecode)
@@ -157,7 +163,8 @@ function load_conversion(Data, conversion, bytecode)
 //  Links all loaded conversions
 function link_conversions(Data)
 {
-    log_linking(["LINKING..."]);
+    LOG("LINKING...");
+    var generic_compiled_count = 0;
     //  False when nothing happened in one iteration of the while loop
 	var notDone = true;
     var missing = false;
@@ -189,6 +196,7 @@ function link_conversions(Data)
                 //  Match failed
     			if (!relocation) continue;
                 log_linking(conversion);
+                generic_compiled_count++;
 
     			notDone = true;
 
@@ -218,8 +226,7 @@ function link_conversions(Data)
                 missing = true;
     	}
 	}
-    log_linking("COMPLETED");
-    log_linking([]);
+    LOG("LINKED! " + generic_compiled_count + " Conversions compiled from generics");
     
     if (missing)
     {

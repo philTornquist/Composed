@@ -31,7 +31,7 @@ function LOG(str)
     }
     else
     {
-        var split = str ? str.toString().split('\n') : ["undefined"];
+        var split = str !== undefined ? str.toString().split('\n') : ["undefined"];
         for (var i = 0; i < split.length; i++)
             print(BEGIN + split[i]);
     }
