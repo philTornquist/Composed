@@ -13,8 +13,8 @@ log_compiler_conversions    = NLOG;
 log_linking                 = NLOG;
 log_linker_restructure      = NLOG;
 log_missing                 = NLOG;
-log_jitting                 = NLOG;
 log_passes                  = NLOG;
+log_jitting                 = NLOG;
 
 log_loaded_conversions      = NLOG;
 log_loaded_generics         = NLOG;

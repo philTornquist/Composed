@@ -1,7 +1,6 @@
 var log_linking = LOG;
 var log_linker_restructure = NLOG;
 var log_missing = NLOG;
-var log_jitting = NLOG;
 var log_passes = NLOG;
 
 function DataStore()
@@ -29,12 +28,14 @@ function DataStore()
     this.JITed            = {};     //  Contains the JIT compiled calls
     
     
-    this.Passes = [
+    this.Pseudo_Pass= [
         remove_redundant_conversions,
         reorder_answers,
         expand_element,
-        inline_conversions,
+        inline_conversions
+    ];
         
+    this.JS_Pass = [
         JS_insert_end_tags,
         JS_insert_param_names,
         JS_insert_commas,
@@ -46,10 +47,15 @@ function JIT(Data)
 {
     LOG("JITing....");
     
-    for (var i = 0; i < Data.Passes.length; i++)
+    var total_passes = Data.Pseudo_Pass.length + Data.JS_Pass.length;
+    for (var i = 0; i < total_passes; i++)
     {
-        LOG("Pass: " + (i+1) + " of " + Data.Passes.length);
-        var pass = Data.Passes[i];
+        LOG("Pass: " + (i+1) + " of " + total_passes);
+
+        var pass = i < Data.Pseudo_Pass.length 
+                    ? Data.Pseudo_Pass[i] 
+                    : Data.JS_Pass[i - Data.Pseudo_Pass.length];
+
         Data.CurrentPass = i;
         if (Data.PassCompiled.length <= i) Data.PassCompiled.push({});
         
@@ -69,7 +75,7 @@ function JIT(Data)
         log_passes(["Compiled: " + conversion]);
         if (!(Data.PassCompiled[0][conversion] instanceof Function))
         {
-            for (var i = 0; i < Data.Passes.length - 1; i++)
+            for (var i = 0; i < Data.PassCompiled.length - 1; i++)
             {
                 log_passes([conversion + " Pass: " + i]);
                 log_passes(Data.PassCompiled[i][conversion].join("\n"));

@@ -1,3 +1,5 @@
+var log_jitting = NLOG;
+
 function js_conversion_rename(conversion) {
     return conversion.replace(/'/g,"_").replace(/,/g,"$").replace(/-/g,"_$_");
 }

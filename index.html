@@ -14,17 +14,47 @@
                     </tr>
                     <tr>
                     <td>
-                        <label><input type="checkbox" id="logExecution" value="value">Log Execution</label>
+                        <label><input type="checkbox" id="log_compiler_conversions" value="value">Log Compilation</label>
                     </td>
                     </tr>
                     <tr>
                     <td>
-                        <label><input type="checkbox" id="logJITTING" value="value">Log JIT</label>
+                        <label><input type="checkbox" id="log_linking" value="value">Log Linking</label>
                     </td>
                     </tr>
                     <tr>
                     <td>
-                        <label><input type="checkbox" id="logRestructure" value="value">Log Generic Creation</label>
+                        <label><input type="checkbox" id="log_linker_restructure" value="value">Log Generic Creation</label>
+                    </td>
+                    </tr>
+                    <tr>
+                    <td>
+                        <label><input type="checkbox" id="log_missing" value="value">Log Missing</label>
+                    </td>
+                    </tr>
+                    <tr>
+                    <td>
+                        <label><input type="checkbox" id="log_passes" value="value">Log JIT Passes</label>
+                    </td>
+                    </tr>
+                    <tr>
+                    <td>
+                        <label><input type="checkbox" id="log_jitting" value="value">Log JITed Functions</label>
+                    </td>
+                    </tr>
+                    <tr>
+                    <td>
+                        <label><input type="checkbox" id="log_loaded_conversions" value="value">Log Loaded Conversions</label>
+                    </td>
+                    </tr>
+                    <tr>
+                    <td>
+                        <label><input type="checkbox" id="log_loaded_generics" value="value">Log Loaded Generics</label>
+                    </td>
+                    </tr>
+                    <tr>
+                    <td>
+                        <label><input type="checkbox" id="log_loaded_selectors" value="value">Log Loaded Selectors</label>
                     </td>
                     </tr>
                   </table>
@@ -36,7 +66,7 @@
         </table>
     <div>
 
-        <textarea id="code" rows=50 cols=100>
+        <textarea id="input_composed" rows=50 cols=100>
 Test1 = Point2D,X,Y 1,2:
 Test2 = Summation,List'Number' [[[Nothing,3],2],1]:
 Test3 = STD,List'Number' [[[[Nothing,4],3],2],1]:
@@ -157,7 +187,7 @@ Factorial is Number:
                  ] > Product > Number
     }
 </textarea>
-<textarea id="inputBytecode" rows=50 cols=100>
+<textarea id="input_pseudo" rows=50 cols=100>
 Conversion>Number,Sum
 Element>0
 Param>0
@@ -336,8 +366,8 @@ IGNORE>)
 EXIT>
 
 </textarea>
-<textarea id="bytecode" rows=50 cols=100></textarea>
-<textarea id="jsCode" rows=50 cols=100></textarea>
+<textarea id="optimized_pseudo" rows=50 cols=100></textarea>
+<textarea id="compiled_javascript" rows=50 cols=100></textarea>
     </div>
     
     <script src="Library/List.cps.js"></script>
@@ -364,8 +394,12 @@ EXIT>
         log_linking                 = NLOG;
         log_linker_restructure      = NLOG;
         log_missing                 = NLOG;
-        log_jitting                 = NLOG;
         log_passes                  = NLOG;
+        log_jitting                 = NLOG;
+
+        log_loaded_conversions      = NLOG;
+        log_loaded_generics         = NLOG;
+        log_loaded_selectors        = NLOG;
     
         document.getElementById("code").value += List_Library + String_CPS;
         
@@ -379,26 +413,46 @@ EXIT>
     
     function clickedRun()
     {
-        log_js_execution = document.getElementById("logExecution").checked ? LOG : NLOG;
-        log_linker_restructure = document.getElementById("logRestructure").checked ? LOG : NLOG;
-        log_jitting = document.getElementById("logJITTING").checked ? LOG : NLOG;
-        log_js_compilation = log_jitting;
+        log_compiler_conversions = document.getElementById("log_compiler_conversions").checked ? LOG : NLOG;
+
+        log_linking              = document.getElementById("log_linking").checked ? LOG : NLOG;
+        log_linker_restructure   = document.getElementById("log_linker_restructure").checked ? LOG : NLOG;
+        log_missing              = document.getElementById("log_missing").checked ? LOG : NLOG;
+        log_passes               = document.getElementById("log_passes").checked ? LOG : NLOG;
+        log_jitting              = document.getElementById("log_jitting").checked ? LOG : NLOG;
     
-        var code = document.getElementById("code").value;
+        log_loaded_conversions   = document.getElementById("log_loaded_conversions").checked ? LOG : NLOG;
+        log_loaded_generics      = document.getElementById("log_loaded_generics").checked ? LOG : NLOG;
+        log_loaded_selectors     = document.getElementById("log_loaded_selectors").checked ? LOG : NLOG;
+
+        var code = 
         document.getElementById("output").value = "";
         Data = new DataStore();
         Data.JITName = js_conversion_rename;
         
-        var conversions = compile(code);
-        load_bytecode(Data, conversions);
+        load_bytecode(Data, compile(document.getElementById("input_composed").value));
         load_bytecode(Data, document.getElementById("inputBytecode").value);
         
         
-        document.getElementById("bytecode").value = conversions;
-        document.getElementById("jsCode").value = "";
         
         link_conversions(Data);
+
+        var pseudocode = "";
+        var jscode = "";
         
+        var opt_pseudo = Data.PassesCompiled[Data.Pseudo_Pass.length-1];
+        for (var conv in opt_pseudo)
+        {
+            pseudocode += opt_pseudo[conv];
+        }
+        var js = Data.PassesCompiled[Data.Pseudo_Pass.length+Data.JS_Pass.length-1]
+        for (var conv in js)
+        {
+            jscode += js[conv].toString();
+        }
+
+        document.getElementById("optimized_pseudo").value = pseudocode;
+        document.getElementById("jsCode").value = jscode;
         
         var missingMsg = "";
         for (var key in Data.Missing)
