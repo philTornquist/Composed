@@ -25,8 +25,8 @@ function Run_Tests()
 
     
     check(  23,                                   "TestingSpecification,Number",                            [3]);
-    check(  [1,2],                                "Point2D,-Type,Number,Number",                            ["Type-Selector",1,2]);
-    check(  [1,20],                               "Point2D,-Type,Number",                                   ["Type-Selector",1]);
+    check(  [1,2],                                "Point2D,-SelectorType,Number,Number",                    ["SelectorType-Selector",1,2]);
+    check(  [1,20],                               "Point2D,-SelectorType,Number",                           ["SelectorType-Selector",1]);
     check(  [5,23],                               "TestingExists,Number",                                   [5]);
     check(  [12,20],                              "TestSelector,Point2D",                                   [[12,9]]);
     check(  26,                                   "TestingSubConversions,Number,Number,Number,Number",      [5,6,7,8]);
