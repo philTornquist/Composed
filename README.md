@@ -5,11 +5,11 @@ Composed is a general purpose programming language designed to give the compiler
 
 A JavaScript implementation of Composed is available [here](http://philTornquist.github.io/Composed).
 
-Composed can become verbose but leads to code that is easy to maintain and extend. There are only a few specific instances where existing code will need to be modified to add a new feature. With a proper IDE the negatives of the verbosity can be elimated.
+Composed is easy to maintain and extend. There are only a few specific instances where existing code will need to be modified to add a new feature. However the code can become verbose but a proper IDE the negatives of the verbosity can be elimated.
 
-New type definitons are expected frequently because type names should convey the interpretation of the data. Type definitions with only one type should make up a large portion of type definitions. This is similar to typedef in C. Type definitions are simple to create and can be placed anywhere within the source file or within another file.
+New type definitons are expected frequently because type names should convey the interpretation of the data. Type definitions with only one type should make up a large portion of type definitions. These are similar to typedef in C except they can also be used to restrict possible values. 
 
-Code can be organized in anyway the programmer thinks is best. All definitions, data conversions and types, are stand-alone entities until runtime meaning they can be placed anywhere (it is possible every definition can be in its own library that are all loaded at runtime ... but that isn't practical). Definitions are compiled into bytecode by the programmer and linked at runtime. This allows the user to select alternative definitions to load for use in a program. 
+Code can be organized in anyway the programmer thinks is best. All definitions, data conversions and types, are stand-alone entities until runtime meaning they can be placed anywhere (it is possible every definition can be in its own library that are all loaded at runtime ... but that isn't practical). Definitions are compiled into pseudocode by the programmer and linked at runtime. This allows the user to select alternative definitions to load for use in a program. 
 
 A major future goal of this language is a smart JIT compiler that can create the extemely fast native code due to the amount of information about the program available. The compiler could be able to choose the best data representation, within the programmers requirements, and remove all operations that are not required such as data structure creations where only some of the data will be used.
 
@@ -21,7 +21,7 @@ Data Conversions define how a type can be created from other types. Data Convers
 - Conversion
  
 ####Combination
-Combination Conversions are like data structures in other programming languages. They define a new data type and contain 2 or more unique types. Here is how a 2-dimensional point is defined in Composed:
+Combination Conversions are like data structures in other programming languages. They define a new data type and contain 2 or more *unique* types. Here is how a 2-dimensional point is defined in Composed:
 
 	Point2D is X, Y
 	
@@ -29,7 +29,7 @@ That's it. Data structures are easy to define and Composed expects new ones to b
 
 	Point2D is Number, Number         'Wrong'
 
-This is the way 'Point2D' is defined in other programming languages and conveys the representation of 'Point2D'. Types in Composed reflect the interpretation of them. Composed combinations can be read "A 2D Point contains an X-Coordinate and a Y-Coordinate" and not like "Our 2D Point will contain two numbers for the X-Coordinate and Y-Coordinate". The Composed definition of 'Point2D' is complete but in order to use it 'X' and 'Y' need to be defined.
+This is the way 'Point2D' is defined in other programming languages and conveys the representation of 'Point2D'. Types in Composed reflect the interpretation of them. Combination conversions can be read as "A 2D Point contains an X-Coordinate and a Y-Coordinate" and not like "Our 2D Point will contain two numbers for the X-Coordinate and Y-Coordinate". The Composed definition of 'Point2D' is complete but in order to use it 'X' and 'Y' need to be defined.
 
 ####Specification
 Specification Conversions are like typedefs in C. They are used to extend the meaning of another type and even narrow the possible values. Continuing the 'Point2D' example, 'X' and 'Y' will be defined as:
@@ -37,14 +37,14 @@ Specification Conversions are like typedefs in C. They are used to extend the me
 	X is Number
 	Y is Number
 	
-Additionally we could also have the y-coordinates of the 'Point2D' be a 'String':
+Additionally we could also have the y-coordinate of the 'Point2D' be a 'String':
 
 	X is Number
 	Y is String
 	
 Again the 'Point2D' reflects the interpretation and should never have to be redefined. Any type definition should never have to be rewritten as long as the interpretation is still the same. 
 
-Another aspect of Specification Conversions is the ability to add a body to the definition to restrict the possible values stored:
+Another aspect of Specification conversions is the ability to add a body to the definition to restrict the possible values stored:
 
 	Squared is Number:
 		[value, value] > Product > Number
@@ -52,7 +52,7 @@ Another aspect of Specification Conversions is the ability to add a body to the 
 Here is the definition for the square of a number. The input type is referenced by the 'value' keyword like in C#. The syntax of the body will be explained in detail later but for now you can read '>' as "convert to".
 
 ####Conversion
-Conversions is similar to functions in other languages. It contains a number of inputs, that can be the same type, where each gets a reference name. Conversions can be used to perform real work or as helper functions like the following:
+Conversions are similar to functions in other languages. It contains a number of inputs, that can be the same type, where each gets a reference name. Conversions can be used to perform real work or as helper functions like the following:
 
 	Point2D from Number(x), Number(y):
 		[
@@ -88,7 +88,7 @@ The keyword 'Nothing' in Composed is similar to null, nil or undefined in other 
 	
 	Nothing > Number
 	
-The conversion is required for Composed to know what data type you want Nothing to be and more importantly the conversion you are trying to call.
+The conversion is required for Composed to know what data type you want and more importantly the conversion you are trying to call.
 
 ###Generics
 Composed supports single-type generic data definitions. The linked-list definition is a generic data definition:
@@ -125,13 +125,15 @@ Selectors do not have to be explicitly defined and have a type. For example the 
 	Kick-Attack
 	Jump-Attack
 	...
+
+The type of the selector is the dash plus everythin after it so the type of 'Punch-Attack' is '-Attack'.
 	
 A selector, and the selector type, is defined when it is used either in a conversion or a conversion definition.
 
-	Damage from Player-Stats(ps), Jump-Attack:
+	Damage from Player-Stats(ps), Jump-Attack:           'Defined Jump-Attack'
 		... calculate jump damage ...
 		
-	Damage from Player-Stats(ps), Kick-Attack:
+	Damage from Player-Stats(ps), Kick-Attack:           'Defined Kick-Attack'
 		... calculate kick damage ...
 		
 The Composed runtime will select which conversion to call depending on the selector passed into the call. As in the conversion to get the damage from a player:
@@ -145,10 +147,10 @@ The Composed runtime will select which conversion to call depending on the selec
 
 Selectors can also be used to create an object heiarchy. Consider the following:
 
-	Shape is ShapeType, Circle, Rectangle
+	Shape is -ShapeType, Circle, Rectangle
 	
 	Area from Shape(s):
-		[s, s > ShapeType] > Area
+		[s, s > -ShapeType] > Area
 		
 	Area from Shape(s), Circle-ShapeType:
 		s > Circle > Area
@@ -156,21 +158,21 @@ Selectors can also be used to create an object heiarchy. Consider the following:
 	Area from Shape(s), Rectangle-ShapeType:
 		s > Rectangle > Area
 		
-Either Circle or Rectangle in the shape definition will have actual data which will be reflected by the value of ShapeType. Adding another shape to the heiarchy is slightly more complicated than an object oriented language but overall relatively simple. 
+Either Circle or Rectangle in the shape definition will have actual data which will be reflected by the value of '-ShapeType'. Adding another shape to the heiarchy is slightly more complicated than an object oriented language but overall relatively simple. 
 
 ###Conversion Body
-The body of a conversion consists of any number pre-conversion calls and a result conversion call. The syntax of a conversion call has two forms, single input and multi-input:
+The body of a conversion consists of any number of sub-conversion calls and a result conversion call. The syntax of a conversion call has two forms, single input and multi-input:
 
     10 > Square > Number
     [10, 20] > Point2D > Length
     
 Multiple inputs must be contained inside '[ ]' and seperated by commas. A single input can have '[ ]' but it is not required. Following the inputs is one or more conversion operators.
 
-Before the result conversion call any number of pre-conversions can be defined:
+Before the result conversion call any number of sub-conversions can be defined:
 
     partialResult: [2,2] > Sum > Number
     
-"partialResult" is now a reference name that can be used in the following pre-conversions and the result converion. The result conversion is a just a standalone conversion and ends the conversion definition. A final example for cubing a number:
+"partialResult" is now a reference name that can be used in any following sub-conversions and the result conversion. The result conversion is a just a standalone conversion and ends the conversion definition. A final example for cubing a number:
 
     Cubed from Number(n):
         squared: [n, n] > Product > Number
