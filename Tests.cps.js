@@ -3,19 +3,20 @@ var TEST_CODE =
 'test = Point2D,X,Y 1,2:',
 'test = Summation,List\'Number\' [[[Nothing,3],2],1]:',
 
-'Point2D from Number(x), -Type(t):',
+'Point2D from Number(x), -SelectorType(t):',
 '   [x, 20, t] > Point2D',
 
 'TestSelector is Point2D:',
-'   [value > X > Number, Selector-Type] > Point2D',
+'   [value > X > Number, Selector-SelectorType] > Point2D',
 
-'Point2D from Number(x), Number(y), Selector-Type:',
+'Point2D from Number(x), Number(y), Selector-SelectorType:',
 '   [x, y] > Point2D',
 
-'X from Y(l):',
-' 23 > X',
+'TestingSpecification is Number:',
+'   23',
 
-'Sum from Number(p), Number(h), Number(i), Number(l):', 
+'TestingSubConversions is Number',
+'TestingSubConversions from Number(p), Number(h), Number(i), Number(l):', 
 '	a:	[p, i] > Sum > Number',
 '	b:	[h, l] > Sum > Number',
 '	[a,b] > Sum',
@@ -31,31 +32,38 @@ var TEST_CODE =
 'Point2D from Number(x), Number(y):',
 '	[x > X, y > Y] > Point2D',
 
-'Number from Number(L), Number(k), Number(s):',
+'TestingNothingReturn is Number
+'TestingNothingReturn from Number(L), Number(k), Number(s):',
 '	Nothing > Sum > Number > Number > Number > Number',
 
-'Number from Number(l), Number(k):',
-'	l > Number{help:[l,l]>Sum test:[k,k]>Sum}',
+'TestingAnswer is Number',
+'TestingAnswer from Number(l), Number(k):',
+'	l > Number{ignored:[l,l]>Sum used:[k,k]>Sum}',
 
-'Number from Number(a):',
-'	{test Number}',
+'TestingAsk is Number',
+'TestingAsk from Number(a):',
+'	{used Number}',
 
-'Point2D from Number(l):',
-'	[l, [l,l,l] > Number > Exists\'Number\'{no:23} > Number] > Point2D',
+'TestingExists is Point2D',
+'TestingExists from Number(l):',
+'	[l, [l,l,l] > TestingNothingReturn > Exists\'Number\'{no:23} > Number] > Point2D',
 
-
-'Point2D from Number(l), Number(i), Number(k):',
+'TestingNothingInDataStructure is Point2D',
+'TestingNothingInDataStructure from Number(l), Number(i), Number(k):',
 '	[l > Y, [l,l,l] > Number > X] > Point2D',
 
-'Point2D from Point2D(l), Number(x), Number(y):',
+'TestingInjection is Point2D',
+'TestingInjection from Point2D(l), Number(x), Number(y):',
 '	[(x > X -> (y > Y -> l)) > Y,',
 '	(x > X -> (y > Y -> l)) > X] > Point2D',
 
 
-'[P]List from X(s), [P](l), Number(j), [P]List(k):',
+'[A]TestingGeneric is [A]List',
+'[P]TestingGeneric from X(s), [P](l), Number(j), [P]List(k):',
 '	[l, k] > [P]List',
 
-'List\'Number\' from Number(a), Number(b):',
+'[A]TestingListBuild is [A]List',
+'TestingListBuild\'Number\' from Number(a), Number(b):',
 '	[a, [b, Nothing > List\'Number\'] > List\'Number\'] > List\'Number\'',
 
 'Sum from Sum(a), Number(b):',

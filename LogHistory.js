@@ -37,7 +37,10 @@ function LOG(str)
     }
 }
 NLOG = function(){};
-function print(str)
+if (!print)
 {
-    document.getElementById("output").value += str + "\n";
+    function print(str)
+    {
+        document.getElementById("output").value += str + "\n";
+    }
 }
