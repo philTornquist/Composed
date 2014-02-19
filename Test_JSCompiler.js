@@ -59,15 +59,15 @@ function Test_JSCompiler()
 
     
     check(  23,                                   "TestingSpecification,Number",                            [3]);
-    check(  [1,2],                                "Point2D,-Type,Number,Number",                            ["Type-Selector",1,2]);
-    check(  [1,20],                               "Point2D,-Type,Number",                                   ["Type-Selector",1]);
+    check(  [1,2],                                "Point2D,-SelectorType,Number,Number",                    ["SelectorType-Selector",1,2]);
+    check(  [1,20],                               "Point2D,-SelectorType,Number",                           ["SelectorType-Selector",1]);
     check(  [5,23],                               "TestingExists,Number",                                   [5]);
     check(  [12,20],                              "TestSelector,Point2D",                                   [[12,9]]);
     check(  26,                                   "TestingSubConversions,Number,Number,Number,Number",      [5,6,7,8]);
     check(  "Nothing",                            "TestingNothingReturn,Number,Number,Number",              [1,2,3]);
     check(  12,                                   "TestingAnswer,Number,Number",                            [5,6]);
     check(  [1,2],                                "Point2D,Number,Number",                                  [1,2]);
-    check(  ["Nothing", 5],                       "Point2D,Number,Number,Number",                           [5,6,7]);
+    check(  ["Nothing", 5],                       "TestingNothingInDataStructure,Number,Number,Number",     [5,6,7]);
     check(  5,                                    "Y,Point2D",                                              [["Nothing",5]]);
     check(  "Nothing",                            "X,Point2D",                                              [["Nothing",5]]);
     check(  [10,20],                              "TestingInjection,Number,Number,Point2D",                 [10,20,[1,2]]); 

@@ -9,8 +9,8 @@ function remove_redundant_conversions(Data, conversion, bytecode, i)
             if (inputs_of(call).length == 1)
             {
                 var revC = inputs_of(call)[0]+","+output_of(call);
-                if ((Data.Types[output_of(call)] == call && BCins(Data.Conversions[call][0]) !== "Specification") ||
-                    (Data.Types[output_of(revC)] == revC && BCins(Data.Conversions[revC][0]) !== "Specification") ||
+                if ((Data.Types[output_of(call)] == call && BCins(Data.Conversions[call][1]) == "Data Structure") ||
+                    (Data.Types[output_of(revC)] == revC && BCins(Data.Conversions[revC][1]) == "Data Structure") ||
                     (inputs_of(call)[0] === "Nothing"))
                 {
                     var input = value_at(bytecode, i+1);
