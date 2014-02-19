@@ -3,7 +3,7 @@ Composed JavaScript Implementation
 
 An implementation of Composed in JavaScript.
 
-Explaination of the language is in the [README](https://github.com/philTornquist/Composed) in the master branch.
+Explaination of the language is in the [README](https://github.com/philTornquist/Composed/tree/master) in the master branch.
 
 [Try it](http://philTornquist.github.io/Composed)
 
