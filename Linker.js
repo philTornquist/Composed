@@ -378,7 +378,7 @@ function generic_match(conversion, generic)
                 for(var key in genericName_MAP_type)
                     ret += key + ": " + genericName_MAP_type[key] + "\n";
                 for(var key in paramMap)
-                    ret += key + ": " + paramMap[key];
+                    ret += key + ": " + paramMap[key] + "\n";
                 return ret;
 			default:
 				throw "Undefined element of relocation: " + element;
