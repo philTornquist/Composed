@@ -3,14 +3,14 @@ function remove_redundant_conversions(Data, conversion, bytecode, i)
     var nc = [];
     for(; i < bytecode.length; i++)
     {
-        if (BCins(bytecode[i]) == "Enter")
+        if (PSins(bytecode[i]) == "Enter")
         {
-            var call = BCdata(bytecode[i]);
+            var call = PSdata(bytecode[i]);
             if (inputs_of(call).length == 1)
             {
                 var revC = inputs_of(call)[0]+","+output_of(call);
-                if ((Data.Types[output_of(call)] == call && BCins(Data.Conversions[call][1]) == "Data Structure") ||
-                    (Data.Types[output_of(revC)] == revC && BCins(Data.Conversions[revC][1]) == "Data Structure") ||
+                if ((Data.Types[output_of(call)] == call && PSins(Data.Conversions[call][1]) == "Data Structure") ||
+                    (Data.Types[output_of(revC)] == revC && PSins(Data.Conversions[revC][1]) == "Data Structure") ||
                     (inputs_of(call)[0] === "Nothing"))
                 {
                     var input = value_at(bytecode, i+1);
@@ -33,12 +33,12 @@ function expand_element(Data, conversion, bytecode, i)
     var nc = [];
     for (; i < bytecode.length; i++)
     {
-        if (BCins(bytecode[i]) == "Element")
+        if (PSins(bytecode[i]) == "Element")
         {
             var typeconv = Data.Types[inputs_of(conversion)[0]];
             if (typeconv && 
                 (Data.Conversions[typeconv][1] == "Data Structure>1" ||
-                 BCins(Data.Conversions[typeconv][0]) == "Specification"))
+                 PSins(Data.Conversions[typeconv][0]) == "Specification"))
             {
                 nc.push("Param>0");
                 i += 2;
@@ -57,7 +57,7 @@ function reorder_answers(Data, conversion, bytecode, i)
     var nc = [];
     for (; i < bytecode.length; i++)
     {
-        switch(BCins(bytecode[i]))
+        switch(PSins(bytecode[i]))
         {
             case "SubConversion":
                 nc.push(bytecode[i]);
@@ -70,7 +70,7 @@ function reorder_answers(Data, conversion, bytecode, i)
                     nc.push(code[j]);
                 break;
             case "Enter":
-                var entered = BCdata(bytecode[i]);
+                var entered = PSdata(bytecode[i]);
                 var ans = [];
                 var counter = {};
                 for (var key in Data.Asks[entered])
@@ -131,12 +131,12 @@ function inline_conversions(Data, conversion, bytecode, i)
     
     for (; i < bytecode.length; i++)
     {
-        if (BCins(bytecode[i]) == "Enter")
+        if (PSins(bytecode[i]) == "Enter")
         {
             var counter = {};
             var ast = ast_call(bytecode, i, counter); 
             
-            var inlineConversion = BCdata(ast[0]);
+            var inlineConversion = PSdata(ast[0]);
     
             var lookupConversion = Data.PassCompiled[Data.CurrentPass-1][inlineConversion];
             if (lookupConversion instanceof Function) { nc.push(bytecode[i]); continue; }
@@ -146,26 +146,26 @@ function inline_conversions(Data, conversion, bytecode, i)
             //  Contains selector type
             if (inputs_of(inlineConversion)[0][0] == "-") { nc.push(bytecode[i]); continue; }
             
-            var inlineBC = lookupConversion;
-            if (inlineBC === undefined) { nc.push(bytecode[i]); continue; }
-            if (BCins(inlineBC[1]) !== "Enter" &&
-                BCins(inlineBC[1]) !== "ENTER" &&
-                BCins(inlineBC[1]) !== "Element") { nc.push(bytecode[i]); continue; }
+            var inlinePS = lookupConversion;
+            if (inlinePS === undefined) { nc.push(bytecode[i]); continue; }
+            if (PSins(inlinePS[1]) !== "Enter" &&
+                PSins(inlinePS[1]) !== "ENTER" &&
+                PSins(inlinePS[1]) !== "Element") { nc.push(bytecode[i]); continue; }
             
-            for (var j = 1; j < inlineBC.length; j++)
+            for (var j = 1; j < inlinePS.length; j++)
             {
-                switch(BCins(inlineBC[j]))
+                switch(PSins(inlinePS[j]))
                 {
                     case "Param":
                         //  Get param from call
                         //   +1 since the ast starts with the Enter instruction
-                        var bc = ast[parseInt(BCdata(inlineBC[j])) + 1];
+                        var bc = ast[parseInt(PSdata(inlinePS[j])) + 1];
                         bc = inline_conversions(Data, conversion, bc, 0);
                         for (var k = 0; k < bc.length; k++)
                             nc.push(bc[k]);
                         break;
                     case "Ask":
-                        var askOffset = Data.Asks[inlineConversion][BCdata(inlineBC[j])];
+                        var askOffset = Data.Asks[inlineConversion][PSdata(inlinePS[j])];
                         var bc = ast[1 + inputs_of(inlineConversion).length + askOffset];
                         bc = inline_conversions(Data, conversion, bc, 0);
                         //  First index is the Answer instruction
@@ -173,7 +173,7 @@ function inline_conversions(Data, conversion, bytecode, i)
                             nc.push(bc[k]);
                         break;
                     default:
-                        nc.push(inlineBC[j]);
+                        nc.push(inlinePS[j]);
                         break;
                 }
             }

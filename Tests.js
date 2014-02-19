@@ -40,8 +40,8 @@ function Run_Tests()
         var Data = new DataStore();
         Data.JITName = js_conversion_rename;
 
-        load_bytecode(Data, compile(test.composedcode));
-        load_bytecode(Data, test.pseudocode);
+        load_pseudocode(Data, compile(test.composedcode));
+        load_pseudocode(Data, test.pseudocode);
 
         log_loaded_conversions(["LOADED: Conversions"]);
         for (var key in Data.Conversions) log_loaded_conversions(key);
@@ -61,9 +61,9 @@ function Run_Tests()
         var funct = CALL(Data, test.conversion);
         var tested = funct.apply(Data.JITed, test.params);
         tested = tested ? tested : "Nothing";
-        if (test.result.toString() === tested.toString()) LOG("Test Passed! " + test.result + " = " + test.conversion + this.params);
+        if (test.result.toString() === tested.toString()) LOG("Test Passed! " + test.result + " = " + test.conversion + test.params);
         else { failed++;
-              LOG("Error with test [" + test.conversion + "] expected " + test.result + " but got " + tested + ". Parameters: " + this.params);
+              LOG("Error with test [" + test.conversion + "] expected " + test.result + " but got " + tested + ". Parameters: " + test.params);
         }
     }
 

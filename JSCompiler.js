@@ -18,11 +18,11 @@ function JS_collapse_structure(struc, nc)
 function JS_insert_end_tags(Data, conversion, bytecode, i)
 {
     var nc = [];
-    var addReturn = BCins(bytecode[0]) == "Conversion" ||
-                    BCins(bytecode[0]) == "Specification";
+    var addReturn = PSins(bytecode[0]) == "Conversion" ||
+                    PSins(bytecode[0]) == "Specification";
     for (; i < bytecode.length; i++)
     {
-        switch(BCins(bytecode[i]))
+        switch(PSins(bytecode[i]))
         {
             case "Answer":
                 nc.push(bytecode[i]);
@@ -57,7 +57,7 @@ function JS_insert_end_tags(Data, conversion, bytecode, i)
         }
     }
     
-    if (BCins(bytecode[0]) == "Conversion" || BCins(bytecode[0]) == "Specification")
+    if (PSins(bytecode[0]) == "Conversion" || PSins(bytecode[0]) == "Specification")
         nc.push("IGNORE>;");
     
     return nc;
@@ -65,8 +65,8 @@ function JS_insert_end_tags(Data, conversion, bytecode, i)
 
 function JS_insert_param_names(Data, conversion, bytecode, i)
 {
-    if (BCins(bytecode[i]) !== "Conversion" &&
-        BCins(bytecode[i]) !== "Specification")
+    if (PSins(bytecode[i]) !== "Conversion" &&
+        PSins(bytecode[i]) !== "Specification")
         return;
         
     var inputs = inputs_of(conversion);
@@ -91,13 +91,13 @@ function JS_insert_param_names(Data, conversion, bytecode, i)
         
     for (i++; i < bytecode.length; i++)
     {
-        switch(BCins(bytecode[i]))
+        switch(PSins(bytecode[i]))
         {
             case "Param":
-                nc.push(BCins(bytecode[i]) + ">" + args[parseInt(BCdata(bytecode[i]))]);
+                nc.push(PSins(bytecode[i]) + ">" + args[parseInt(PSdata(bytecode[i]))]);
                 break;
             case "Sub":
-                nc.push(BCins(bytecode[i]) + ">" + Data.SubConversions[conversion][parseInt(BCdata(bytecode[i]))]);
+                nc.push(PSins(bytecode[i]) + ">" + Data.SubConversions[conversion][parseInt(PSdata(bytecode[i]))]);
                 break;
             default:
                 nc.push(bytecode[i]);
@@ -113,12 +113,12 @@ function JS_insert_commas(Data, conversion, bytecode, i)
     var nc = [];
     for (; i < bytecode.length; i++)
     {
-        if (BCins(bytecode[i]) == "Enter")
+        if (PSins(bytecode[i]) == "Enter")
         {
             var ans = [];
             var counter = {};
             var first_param = false;
-            var commas_to_insert = inputs_of(BCdata(bytecode[i])).length - 1;
+            var commas_to_insert = inputs_of(PSdata(bytecode[i])).length - 1;
             var code = forall_inputs(bytecode, i,
                 function(bc, i) 
                 { 
@@ -170,8 +170,8 @@ function JS_compile(Data, conversion, bytecode, i)
     var arguments = "";
     for(; i < bytecode.length; i++)
     {
-        var ins = BCins(bytecode[i]);
-        var data = BCdata(bytecode[i]);
+        var ins = PSins(bytecode[i]);
+        var data = PSdata(bytecode[i]);
         switch (ins) {
             case "Arguments":
                 arguments = data;
@@ -187,7 +187,7 @@ function JS_compile(Data, conversion, bytecode, i)
                 break;
             case "Element":
                 jsString += "function(r){return (r instanceof String && r==\"Nothing\")?\"Nothing\":";
-                jsString += "r["+BCdata(bytecode[i])+"];";
+                jsString += "r["+PSdata(bytecode[i])+"];";
                 jsString += "}(";
                 break;
             case "Extract":

@@ -16,7 +16,7 @@ log_missing                 = NLOG;
 log_jitting                 = NLOG;
 log_passes                  = NLOG;
 
-log_loaded_conversion       = NLOG;
+log_loaded_conversions      = NLOG;
 log_loaded_generics         = NLOG;
 log_loaded_selectors        = NLOG;
 

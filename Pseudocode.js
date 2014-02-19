@@ -1,4 +1,4 @@
-/*  BYTECODE SYNTAX
+/*  PSEUDOCODE SYNTAX
 
 Conversion | Specification | Combination
 
@@ -160,13 +160,13 @@ var COMPARE = "" +
 "EXIT>\n";
 
 
-function BCins(bytecode)
+function PSins(pseudocode)
 {
-    return bytecode.split(">")[0];
+    return pseudocode.split(">")[0];
 }
-function BCdata(bytecode)
+function PSdata(pseudocode)
 {
-    return bytecode.split(">")[1];
+    return pseudocode.split(">")[1];
 }
 function HintIns(hint)
 {
@@ -178,87 +178,87 @@ function HintData(hint)
     return (split.length > 1) ? split[1] : true;
 }
 
-function value_at(bytecode, i)
+function value_at(pseudocode, i)
 {
     var entercount = 0;
     var value = [];
     do
     {
-        if (BCins(bytecode[i]) == "Enter" ||
-            BCins(bytecode[i]) == "ENTER" ||
-            BCins(bytecode[i]) == "Element" )
+        if (PSins(pseudocode[i]) == "Enter" ||
+            PSins(pseudocode[i]) == "ENTER" ||
+            PSins(pseudocode[i]) == "Element" )
         {
             entercount++;
         }
-        else if (BCins(bytecode[i]) == "Call" ||
-                 BCins(bytecode[i]) == "EXIT" ||
-                 BCins(bytecode[i]) == "Extract")
+        else if (PSins(pseudocode[i]) == "Call" ||
+                 PSins(pseudocode[i]) == "EXIT" ||
+                 PSins(pseudocode[i]) == "Extract")
         {
             entercount--;
         }
-        value.push(bytecode[i++]);
+        value.push(pseudocode[i++]);
     } while(entercount > 0);
     return value;
 }
 
-function ast_call(bytecode, i, counter)
+function ast_call(pseudocode, i, counter)
 {
     if (counter) counter.value = -i;
-    if (BCins(bytecode[i]) !== "Enter") throw "Error";
+    if (PSins(pseudocode[i]) !== "Enter") throw "Error";
     var code = [];
     
-    code.push(bytecode[i++]);
+    code.push(pseudocode[i++]);
     
-    while (BCins(bytecode[i]) == "IGNORE") 
-        code.push(bytecode[i++]);
+    while (PSins(pseudocode[i]) == "IGNORE") 
+        code.push(pseudocode[i++]);
     
     do
     {
-        var inp = value_at(bytecode, i);
+        var inp = value_at(pseudocode, i);
         i += inp.length;
         
         code.push(inp);
         
-        while (BCins(bytecode[i]) == "IGNORE") 
-            code.push(bytecode[i++]);
-    } while(BCins(bytecode[i]) !== "Call" && BCins(bytecode[i]) !== "Answer");
+        while (PSins(pseudocode[i]) == "IGNORE") 
+            code.push(pseudocode[i++]);
+    } while(PSins(pseudocode[i]) !== "Call" && PSins(pseudocode[i]) !== "Answer");
     
-    while (BCins(bytecode[i]) == "Answer")
+    while (PSins(pseudocode[i]) == "Answer")
     {
-        var ansIns = bytecode[i];
-        var ans = value_at(bytecode, i+1);
+        var ansIns = pseudocode[i];
+        var ans = value_at(pseudocode, i+1);
         
         i += ans.length+1;
-        while (BCins(bytecode[i]) == "IGNORE") 
-            ans.push(bytecode[i++]);
+        while (PSins(pseudocode[i]) == "IGNORE") 
+            ans.push(pseudocode[i++]);
         
         ans.unshift(ansIns);
         code.push(ans);
     }
     
-    code.push(bytecode[i]);
+    code.push(pseudocode[i]);
     
-    while (BCins(bytecode[i]) == "IGNORE")
-        code.push(bytecode[i++]);
+    while (PSins(pseudocode[i]) == "IGNORE")
+        code.push(pseudocode[i++]);
         
     if (counter) counter.value += i;
     return code;
 }
 
-function forall_inputs(bytecode, i, input_funct, answer_funct, counter)
+function forall_inputs(pseudocode, i, input_funct, answer_funct, counter)
 {
     if (counter) counter.value = -i;
-    if (BCins(bytecode[i]) !== "Enter") return [bytecode[i]];
+    if (PSins(pseudocode[i]) !== "Enter") return [pseudocode[i]];
     var code = [];
     
-    code.push(bytecode[i++]);
+    code.push(pseudocode[i++]);
     
-    while (BCins(bytecode[i]) == "IGNORE") 
-        code.push(bytecode[i++]);
+    while (PSins(pseudocode[i]) == "IGNORE") 
+        code.push(pseudocode[i++]);
     
     do
     {
-        var inp = value_at(bytecode, i);
+        var inp = value_at(pseudocode, i);
         var res = input_funct ? input_funct(inp, 0) : undefined;
         var sel = res !== undefined ? res : inp;
         i += inp.length;
@@ -266,20 +266,20 @@ function forall_inputs(bytecode, i, input_funct, answer_funct, counter)
             code.push(sel[j]);
         
         
-        while (BCins(bytecode[i]) == "IGNORE") 
-            code.push(bytecode[i++]);
-    } while(BCins(bytecode[i]) !== "Call" && BCins(bytecode[i]) !== "Answer");
+        while (PSins(pseudocode[i]) == "IGNORE") 
+            code.push(pseudocode[i++]);
+    } while(PSins(pseudocode[i]) !== "Call" && PSins(pseudocode[i]) !== "Answer");
     
-    while (BCins(bytecode[i]) == "Answer")
+    while (PSins(pseudocode[i]) == "Answer")
     {
-        var ansIns = bytecode[i];
-        var ans = value_at(bytecode, i+1);
+        var ansIns = pseudocode[i];
+        var ans = value_at(pseudocode, i+1);
         
         i += ans.length+1;
-        while (BCins(bytecode[i]) == "IGNORE") 
-            ans.push(bytecode[i++]);
+        while (PSins(pseudocode[i]) == "IGNORE") 
+            ans.push(pseudocode[i++]);
         
-        var res = answer_funct ? answer_funct(ans, 0, BCdata(ansIns)) : undefined;
+        var res = answer_funct ? answer_funct(ans, 0, PSdata(ansIns)) : undefined;
         var sel = res !== undefined ? res : ans;
         
         if (sel.length != 0) 
@@ -288,10 +288,10 @@ function forall_inputs(bytecode, i, input_funct, answer_funct, counter)
             code.push(sel[j]);
     }
     
-    code.push(bytecode[i]);
+    code.push(pseudocode[i]);
     
-    while (BCins(bytecode[i]) == "IGNORE")
-        code.push(bytecode[i++]);
+    while (PSins(pseudocode[i]) == "IGNORE")
+        code.push(pseudocode[i++]);
         
     if (counter) counter.value += i;
     

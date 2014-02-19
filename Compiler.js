@@ -41,7 +41,7 @@ function CodeDef(str) {
     this.skipcomment = function() { if (this.str.charAt(this.index) == '/') { this.index++; while(this.str.charAt(this.index) != '/' && this.str.charAt(this.index) != '\n') this.index++; if (this.str.charAt(this.index) == '/') this.index++; } };
 }
 
-function ConversionDefinition(type, output, inputs, selectors, bytecode) {
+function ConversionDefinition(type, output, inputs, selectors, pseudocode) {
     this.output = output;
     this.inputs = inputs;
     this.name = output;
@@ -50,7 +50,7 @@ function ConversionDefinition(type, output, inputs, selectors, bytecode) {
     if (selectors.length != 0) this.name += ":" + selectors[0];
     for (var i = 1; i < selectors.length; i++) this.name += "," + selectors[i];
     
-    this.bytecode = type + ">" + this.name + "\n" + bytecode;
+    this.pseudocode = type + ">" + this.name + "\n" + pseudocode;
 }
 
 function compile(str) {
@@ -84,13 +84,13 @@ function compile(str) {
 
 function parseElement(code) {
 
-    var pseudocode = "";
+    var compiledcode = "";
     var conversions = 0;
     var inlines = 0;
     var start_index = code.index;
 
-    var add = function(type, output, inputs, selectors, bytecode) {
-        pseudocode += new ConversionDefinition(type, output, inputs, selectors, bytecode).bytecode + "\n";
+    var add = function(type, output, inputs, selectors, pseudocode) {
+        compiledcode += new ConversionDefinition(type, output, inputs, selectors, pseudocode).pseudocode + "\n";
         conversions++;
     }
 
@@ -141,26 +141,26 @@ function parseElement(code) {
                 case 1:
 
                     //  Find the conversion
-                    var bytecode = 0;
+                    var pseudocode = 0;
                     if (code.get() == ':') {
                         code.next();
                         code.clearWhite();
-                        bytecode = parseConversion(code, {"value":0}, {"value":types[0]}, {}, {}, {}).bytecode();
+                        pseudocode = parseConversion(code, {"value":0}, {"value":types[0]}, {}, {}, {}).pseudocode();
                         
                         add("Specification",
                             output,
                             types,
                             [],
-                            bytecode);    
+                            pseudocode);    
                     }
                     else {
-                        bytecode = "Data Structure>1\n";
+                        pseudocode = "Data Structure>1\n";
                         
                         add("Conversion",
                             output,
                             types,
                             [],
-                            bytecode);    
+                            pseudocode);    
                     }
                     break;
 
@@ -180,7 +180,7 @@ function parseElement(code) {
                     types[i], 
                     [output], 
                     [],
-                    "Element>" + i + "\nParam>0\nExtract>" + i);
+                    "Element>" + i + "\nParam>0\nExtract>" + i + "\n");
 
                 if (types.length == 1) continue;
                 
@@ -191,31 +191,31 @@ function parseElement(code) {
                 if (injectSig == output + "," + injectArray.join(','))
                     continue;
 
-                var bytecode = "Enter>" + injectSig;
+                var pseudocode = "Enter>" + injectSig;
 
-                bytecode += "\n";
+                pseudocode += "\n";
                 for (var j = 0; j < types.length; j++)
                 {
                     if (j == i)
                     {
-                        bytecode += "Param>" + (injectArray[0] == types[j] ? 0 : 1) + "\n";
+                        pseudocode += "Param>" + (injectArray[0] == types[j] ? 0 : 1) + "\n";
                     }
                     else
                     {
-                        bytecode += "Enter>" + types[j] + "," + output + "\n";
-                        bytecode += "Param>" + (injectArray[0] == output ? 0 : 1) + "\n";
-                        bytecode += "Call>" + types[j] + "," + output + "\n";
+                        pseudocode += "Enter>" + types[j] + "," + output + "\n";
+                        pseudocode += "Param>" + (injectArray[0] == output ? 0 : 1) + "\n";
+                        pseudocode += "Call>" + types[j] + "," + output + "\n";
                     }
                 }
-                bytecode += "Call>" + injectSig;
+                pseudocode += "Call>" + injectSig;
                 
-                bytecode += "\n";
+                pseudocode += "\n";
 
                 add("Conversion",
                     output,
                     injectArray,
                     [],
-                    bytecode);
+                    pseudocode);
             }
 
             break;
@@ -302,7 +302,7 @@ function parseElement(code) {
                 inputs, 
                 selectors, 
                 subConversions + 
-                parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type).bytecode());
+                parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type).pseudocode());
             //  Remember to seperate selectors from input
             //    and log the selector type as a valid type
             break;
@@ -320,7 +320,7 @@ function parseElement(code) {
             var data = "";
             while (code.get() != ':') { data += code.get(); code.next(); }
             code.next();
-            pseudocode += "Inline>" + output + "=" + call.join(',') + "<" + data + "\n";
+            compiledcode += "Inline>" + output + "=" + call.join(',') + "<" + data + "\n";
             inlines++;
     }
 
@@ -329,17 +329,17 @@ function parseElement(code) {
     log_compiler_conversions(code.str.substring(start_index, code.index).replace(/^\n*$/g,""));
     log_compiler_conversions([]);
     log_compiler_conversions(["Pseudo Code"]);
-    log_compiler_conversions(pseudocode.replace(/^\n*$/g,""));
+    log_compiler_conversions(compiledcode.replace(/^\n*$/g,""));
     log_compiler_conversions([]);
     log_compiler_conversions([]);
 
-    return [pseudocode, conversions, inlines];
+    return [compiledcode, conversions, inlines];
 }
 
 function VariableConversion(varNumber, type) {
     this.varNumber = varNumber;
     this.type = type;
-    this.bytecode = function() {
+    this.pseudocode = function() {
         return "Param>" + this.varNumber + "\n";
     };
 }
@@ -347,7 +347,7 @@ function VariableConversion(varNumber, type) {
 function SubConversion(subNumber, type) {
     this.subNumber = subNumber;
     this.type = type;
-    this.bytecode = function() {
+    this.pseudocode = function() {
         return "Sub>" + this.subNumber + "\n";
     };
 }
@@ -356,14 +356,14 @@ function ConstantConversion(constantStr) {
     if (isNaN(constantStr)) {
         if (constantStr == "Nothing") {
             this.type = "Nothing";
-            this.bytecode = function() {
+            this.pseudocode = function() {
                 //return "Ask>Nothing" + "\n";
                 return "Nothing>\n";
             }
         }
         else if (constantStr[1] == '"') {
             this.type = "Character";
-            this.bytecode = function() {
+            this.pseudocode = function() {
                 return "Character>" + constantStr.substring(1, constantStr.length-1) + "\n";
             };
         }
@@ -374,7 +374,7 @@ function ConstantConversion(constantStr) {
     }
     else {
         this.type = "Number";
-        this.bytecode = function() {
+        this.pseudocode = function() {
             return "Number>" + parseFloat(constantStr) + "\n";
         };
     }
@@ -383,7 +383,7 @@ function ConstantConversion(constantStr) {
 function SelectorConversion(selector, type) {
     this.type = "-" + type;
     this.selector = selector;
-    this.bytecode = function() {
+    this.pseudocode = function() {
         return "Selector>" + this.type.substring(1) + "-" + this.selector + "\n";
     };
 }
@@ -391,18 +391,18 @@ function SelectorConversion(selector, type) {
 function AskConversion(caseName, type) {
     this.type = type;
     this.caseName = caseName;
-    this.bytecode = function() {
+    this.pseudocode = function() {
         return "Ask>" + caseName + "\n";
     }
 }
 
 function AnswersConversion(case_MAP_conversion) {
     this.case_MAP_conversion = case_MAP_conversion;
-    this.bytecode = function() {
+    this.pseudocode = function() {
         var bc = "";
         for (var key in this.case_MAP_conversion) {
             bc += "Answer>" + key + "\n";
-            bc += this.case_MAP_conversion[key].bytecode();
+            bc += this.case_MAP_conversion[key].pseudocode();
         }
         return bc;
     }
@@ -416,19 +416,19 @@ function InjectionConversion(value, injectInTo) {
     this.value.containing = this;
     this.injectInTo.containing = this;
     
-    this.bytecode = function() {
+    this.pseudocode = function() {
         var inputs = [this.type];
         inputs.addInOrder(this.value.type);
         var conversion = this.type + "," + inputs.join(",");
         var bc = "Enter>" + conversion + "\n";
         
         if (inputs[0] == this.value.type) {
-          bc += this.value.bytecode();
-          bc += this.injectInTo.bytecode();
+          bc += this.value.pseudocode();
+          bc += this.injectInTo.pseudocode();
         }
         else {
-          bc += this.injectInTo.bytecode();
-          bc += this.value.bytecode();
+          bc += this.injectInTo.pseudocode();
+          bc += this.value.pseudocode();
         }
         
 //        bc += "Inject>" + this.injectInTo.type + "," + inputs[0] + "," + inputs[1] + "\n";
@@ -451,14 +451,14 @@ function ActualConversion(output, inputs) {
         }
     }
 
-    this.bytecode = function() {
+    this.pseudocode = function() {
         var bc = "Enter>" + this.signature + "\n";
 
         for(var i = 0; i < this.inputs.length; i++) {
-            bc += this.inputs[i].bytecode();
+            bc += this.inputs[i].pseudocode();
         }
         
-        if (this.answers) bc += this.answers.bytecode();
+        if (this.answers) bc += this.answers.pseudocode();
         
         bc += "Call>" + this.signature + "\n";
 
@@ -474,10 +474,10 @@ function ContinuationConversion(output, input) {
     this.output = output;
     this.input = input;
     this.input.nextStage = this;
-    this.bytecode = function() {
+    this.pseudocode = function() {
         var bc = "Enter>" + this.signature + "\n";
-        bc += this.input.bytecode();
-        if (this.answers) bc += this.answers.bytecode();
+        bc += this.input.pseudocode();
+        if (this.answers) bc += this.answers.pseudocode();
         bc += "Call>" + this.signature + "\n";
         return bc;
     };
@@ -500,11 +500,11 @@ function parseSubConversions(code, varname_MAP_number, varname_MAP_type, generic
     code.next();
     code.clearWhite();
     
-    var bytecode = parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type);
-    subconv_MAP_type[subname] = bytecode.output;
+    var pseudocode = parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type);
+    subconv_MAP_type[subname] = pseudocode.output;
     
     code.release();
-    return "SubConversion>" + subname + "\n" + bytecode.bytecode() + parseSubConversions(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type);
+    return "SubConversion>" + subname + "\n" + pseudocode.pseudocode() + parseSubConversions(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type);
 }
 
 function parseConversion(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type) {
@@ -834,7 +834,7 @@ function Test(str) {
     print("\n");
     var results = parse(str);
     for (var i = 0; i < results[0].length; i++) {
-        print("\t\t" + results[0][i].name + "\n" + results[0][i].bytecode);
+        print("\t\t" + results[0][i].name + "\n" + results[0][i].pseudocode);
     }
     print("\n");
 }
