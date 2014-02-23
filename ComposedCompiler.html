@@ -38,6 +38,7 @@
 
         <textarea id="code" rows=50 cols=100>
 Test_Parser'Literal' = Parser'Literal',Parser'Number' [123,"Test Type_"]:
+Test_ParseClearWhite' = Parser'ClearedWhite',Parser'Literal' [[T,[e,[s,[t,Nothing]]]],[ ,[T,[y,[p,[e,[_,Nothing]]]]]]][[T,[e,[s,[t,Nothing]]]],[ ,[T,[y,[p,[e,[_,Nothing]]]]]]]:
     
 SourceText is String
 [A]Parser is [A], SourceText    
@@ -388,7 +389,7 @@ EXIT>
             
           
         if (missingMsg == "")
-            runInline();
+            run_inline();
         else
             alert("Missing the following conversions:\n" + missingMsg)
     }

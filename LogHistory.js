@@ -37,7 +37,7 @@ function LOG(str)
     }
 }
 NLOG = function(){};
-if (!print)
+if (print === undefined)
 {
     function print(str)
     {

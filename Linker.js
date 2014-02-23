@@ -730,7 +730,7 @@ function CALL(Data, call)
 	return funct;
 }
 
-function runInline()
+function run_inline()
 {
     LOG(["Running Inline Conversions"]);
     function dataifyParamString(str)

@@ -68,6 +68,24 @@ var DIFFERENCE = "" +
 "IGNORE>)\n"+
 "EXIT>\n";
 
+var PRODUCT = "" + 
+"Conversion>Product,Number\n"+
+"Data Structure>1\n"+
+"\n"+
+"Conversion>Number,Product\n"+
+"Element>0\n"+
+"Param>0\n"+
+"Extract>0\n"+
+"\n"+
+"Conversion>Product,Number,Number\n"+
+"ENTER>\n"+
+"IGNORE>(\n"+
+"Param>0\n"+
+"IGNORE> * \n"+
+"Param>1\n"+
+"IGNORE>)\n"+
+"EXIT>\n";
+
 var QUOTIENT = "" + 
 "Conversion>Quotient,Number\n"+
 "Data Structure>1\n"+
@@ -159,6 +177,7 @@ var COMPARE = "" +
 "IGNORE>)\n"+
 "EXIT>\n";
 
+var BUILT_IN = NOTHING + EXISTS + COMPARE + SUM + DIFFERENCE + PRODUCT + QUOTIENT + SQUARE + SQRT;
 
 function PSins(pseudocode)
 {
