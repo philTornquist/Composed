@@ -115,7 +115,7 @@ function JS_insert_commas(Data, conversion, bytecode, i)
     var nc = [];
     for (; i < bytecode.length; i++)
     {
-        if (PSins(bytecode[i]) == "Enter")
+        if (PSins(bytecode[i]) == "Enter" || PSins(bytecode[i]) == "StartLoop")
         {
             var ans = [];
             var counter = {};
@@ -169,6 +169,7 @@ function JS_insert_commas(Data, conversion, bytecode, i)
 function JS_compile(Data, conversion, bytecode, i)
 {
     var jsString = "";
+    var jsEnd = "";
     var arguments = "";
     for(; i < bytecode.length; i++)
     {
@@ -206,6 +207,15 @@ function JS_compile(Data, conversion, bytecode, i)
                 break;
             case "Sub":
                 jsString += data;
+                break;
+            case "StartLoop":
+                jsString = "function loop_call("+arguments+"){\n" + jsString;
+                jsString += "function(){var args = arguments; return function() {return loop_call.apply(this,args);}}(";
+
+                jsEnd += "}\nvar call_args = arguments;\nvar loop_var = function(){return loop_call.apply(this, call_args);};\nwhile(loop_var instanceof Function) loop_var = loop_var.apply(this);\nreturn loop_var;";
+                break;
+            case "EndLoop":
+                jsString += ")";
                 break;
             case "Data Structure":
                 if (data == "1")
@@ -273,8 +283,10 @@ function JS_compile(Data, conversion, bytecode, i)
     }
      
     log_jitting(["JS: " + conversion])
-    log_jitting("function " + conversion + "(" + arguments + ") {\n" + jsString + "\n}\n\n");
+    log_jitting("function " + conversion + "(" + arguments + ") {\n" + jsString + jsEnd + "\n}\n\n");
     log_jitting([]);
+
+    if (jsEnd != "") console.log(conversion, jsString + jsEnd);
              
-    return new Function(arguments, jsString);
+    return new Function(arguments, jsString + jsEnd);
 }

@@ -32,6 +32,7 @@ function DataStore()
         remove_redundant_conversions,
         reorder_answers,
         expand_element,
+        tail_call_optimization,
         inline_conversions
     ];
         
@@ -69,6 +70,8 @@ function JIT(Data)
             Data.PassCompiled[i][conversion] = (bc instanceof Function) ? bc : pass(Data, conversion, bc, 0);
         }
     }
+
+    console.log(Data);
     
     for (var conversion in Data.PassCompiled[0])
     {
@@ -145,12 +148,16 @@ function load_conversion(Data, conversion, pseudocode)
         //  Change array of pseudocode instructions into its structure
 		Data.Generics[conversion] = pseudocode;
 
+        for (var ii = 1; ii < pseudocode.length; ii++)
+            if (PSins(pseudocode[ii]) !== "Hint")
+                break;
+
         //  If  the conversion is to build a data structure
         //    Then add is to the list of data structure types
-		if (pseudocode[1].split(">")[0] == "Data Structure")
+		if (pseudocode[ii].split(">")[0] == "Data Structure")
         {
 			Data.Types[generic_type(output_of(conversion))] = conversion;
-            if (pseudocode[1].split(">")[1] == "1")
+            if (pseudocode[ii].split(">")[1] == "1")
                 Data.Specifics[generic_type(output_of(conversion))] = true;
         }
         else if (pseudocode[0].split(">")[0] == "Specification") {
@@ -680,17 +687,19 @@ function add_conversion(Data, conversion, pseudocode)
                 if (!Data.SubConversions[conversion]) Data.SubConversions[conversion] = [];
                 Data.SubConversions[conversion].push(data);
                 break;
+            case "Data Structure":
+                Data.Types[output_of(conversion)] = conversion;
+                nc.push(pseudocode[i]);
+                break;
             default:
                 nc.push(pseudocode[i]);
                 break;
 		}	
 	}	
-	if (nc[1].split(">")[0] == "Data Structure" ||
-        nc[0].split(">")[0] == "Specification") 
+	if (nc[0].split(">")[0] == "Specification") 
     {
         Data.Types[output_of(conversion)] = conversion;
-        if (nc[0].split(">")[0] == "Specification")
-            Data.Specifics[output_of(conversion)] = true;
+        Data.Specifics[output_of(conversion)] = true;
     }
     
     return nc;

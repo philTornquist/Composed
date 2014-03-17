@@ -13,15 +13,18 @@ Enter | ENTER | Element | Param | Character | Number | Ask | Sub | Selector
 var NONE = '';
 var NOTHING = "" +
 "Conversion>[A],Nothing\n"+
+"Hint>TailRecursive\n"+
 "Nothing>\n";
 
 var EXISTS = "" +
 "Conversion>[A],[A]Exists\n"+
+"Hint>TailRecursive\n"+
 "Element>0\n"+
 "Param>0\n"+
 "Extract>0\n"+
 "\n"+
 "Specification>[B]Exists,[A]\n"+
+"Hint>TailRecursive\n"+
 "ENTER>\n"+
 "IGNORE>(\n"+
 "Param>0\n"+
@@ -34,11 +37,13 @@ var EXISTS = "" +
 
 var SUM = "" + 
 "Conversion>Number,Sum\n"+
+"Hint>TailRecursive\n"+
 "Element>0\n"+
 "Param>0\n"+
 "Extract>0\n"+
 "\n"+
 "Conversion>Sum,Number\n"+
+"Hint>TailRecursive\n"+
 "Data Structure>1\n"+
 "\n"+
 "Conversion>Sum,Number,Number\n"+
@@ -52,11 +57,13 @@ var SUM = "" +
 
 var DIFFERENCE = "" + 
 "Conversion>Number,Difference\n"+
+"Hint>TailRecursive\n"+
 "Element>0\n"+
 "Param>0\n"+
 "Extract>0\n"+
 "\n"+
 "Conversion>Difference,Number\n"+
+"Hint>TailRecursive\n"+
 "Data Structure>1\n"+
 "\n"+
 "Conversion>Difference,Number,Number\n"+
@@ -70,9 +77,11 @@ var DIFFERENCE = "" +
 
 var PRODUCT = "" + 
 "Conversion>Product,Number\n"+
+"Hint>TailRecursive\n"+
 "Data Structure>1\n"+
 "\n"+
 "Conversion>Number,Product\n"+
+"Hint>TailRecursive\n"+
 "Element>0\n"+
 "Param>0\n"+
 "Extract>0\n"+
@@ -88,9 +97,11 @@ var PRODUCT = "" +
 
 var QUOTIENT = "" + 
 "Conversion>Quotient,Number\n"+
+"Hint>TailRecursive\n"+
 "Data Structure>1\n"+
 "\n"+
 "Conversion>Number,Quotient\n"+
+"Hint>TailRecursive\n"+
 "Element>0\n"+
 "Param>0\n"+
 "Extract>0\n"+
@@ -106,6 +117,7 @@ var QUOTIENT = "" +
 
 var SQUARE = "" + 
 "Conversion>Number,Square\n"+
+"Hint>TailRecursive\n"+
 "Element>0\n"+
 "Param>0\n"+
 "Extract>0\n"+
@@ -121,6 +133,7 @@ var SQUARE = "" +
 
 var SQRT = "" + 
 "Conversion>Number,SquareRoot\n"+
+"Hint>TailRecursive\n"+
 "Element>0\n"+
 "Param>0\n"+
 "Extract>0\n"+
@@ -134,14 +147,17 @@ var SQRT = "" +
     
 var COMPARE = "" +
 "Conversion>[A]Compare,[A]\n"+
+"Hint>TailRecursive\n"+
 "Data Structure>1\n"+
 "\n"+
 "Conversion>[A],[A]Compare\n"+
+"Hint>TailRecursive\n"+
 "Element>0\n"+
 "Param>0\n"+
 "Extract>0\n"+
 "\n"+
 "Conversion>[A]Compare,Character,Character\n"+
+"Hint>TailRecursive\n"+
 "ENTER\n"+
 "Param>0\n"+
 "IGNORE> < \n"+
@@ -160,6 +176,7 @@ var COMPARE = "" +
 "EXIT>\n"+
 "\n"+
 "Conversion>[A]Compare,Number,Number\n"+
+"Hint>TailRecursive\n"+
 "ENTER>\n"+
 "Param>0\n"+
 "IGNORE> < \n"+
@@ -205,13 +222,15 @@ function value_at(pseudocode, i)
     {
         if (PSins(pseudocode[i]) == "Enter" ||
             PSins(pseudocode[i]) == "ENTER" ||
-            PSins(pseudocode[i]) == "Element" )
+            PSins(pseudocode[i]) == "Element" ||
+            PSins(pseudocode[i]) == "StartLoop")
         {
             entercount++;
         }
         else if (PSins(pseudocode[i]) == "Call" ||
                  PSins(pseudocode[i]) == "EXIT" ||
-                 PSins(pseudocode[i]) == "Extract")
+                 PSins(pseudocode[i]) == "Extract" ||
+                 PSins(pseudocode[i]) == "EndLoop")
         {
             entercount--;
         }
@@ -223,7 +242,7 @@ function value_at(pseudocode, i)
 function ast_call(pseudocode, i, counter)
 {
     if (counter) counter.value = -i;
-    if (PSins(pseudocode[i]) !== "Enter") throw "Error";
+    if (PSins(pseudocode[i]) !== "Enter" && PSins(pseudocode[i]) !== "StartLoop") throw "Error";
     var code = [];
     
     code.push(pseudocode[i++]);
@@ -240,7 +259,7 @@ function ast_call(pseudocode, i, counter)
         
         while (PSins(pseudocode[i]) == "IGNORE") 
             code.push(pseudocode[i++]);
-    } while(PSins(pseudocode[i]) !== "Call" && PSins(pseudocode[i]) !== "Answer");
+    } while(PSins(pseudocode[i]) !== "Call" && PSins(pseudocode[i]) !== "Answer" && PSins(pseudocode[i]) !== "EndLoop");
     
     while (PSins(pseudocode[i]) == "Answer")
     {
@@ -267,7 +286,7 @@ function ast_call(pseudocode, i, counter)
 function forall_inputs(pseudocode, i, input_funct, answer_funct, counter)
 {
     if (counter) counter.value = -i;
-    if (PSins(pseudocode[i]) !== "Enter") return [pseudocode[i]];
+    if (PSins(pseudocode[i]) !== "Enter" && PSins(pseudocode[i]) !== "StartLoop") return [pseudocode[i]];
     var code = [];
     
     code.push(pseudocode[i++]);
@@ -287,7 +306,7 @@ function forall_inputs(pseudocode, i, input_funct, answer_funct, counter)
         
         while (PSins(pseudocode[i]) == "IGNORE") 
             code.push(pseudocode[i++]);
-    } while(PSins(pseudocode[i]) !== "Call" && PSins(pseudocode[i]) !== "Answer");
+    } while(PSins(pseudocode[i]) !== "Call" && PSins(pseudocode[i]) !== "Answer" && PSins(pseudocode[i]) !== "EndLoop");
     
     while (PSins(pseudocode[i]) == "Answer")
     {

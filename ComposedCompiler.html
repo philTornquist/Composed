@@ -38,7 +38,9 @@
 
         <textarea id="code" rows=50 cols=100>
 Test_Parser'Literal' = Parser'Literal',Parser'Number' [123,"Test Type_"]:
-Test_ParseClearWhite' = Parser'ClearedWhite',Parser'Literal' [[T,[e,[s,[t,Nothing]]]],[ ,[T,[y,[p,[e,[_,Nothing]]]]]]][[T,[e,[s,[t,Nothing]]]],[ ,[T,[y,[p,[e,[_,Nothing]]]]]]]:
+Test_ParseClearWhite' = Parser'ClearedWhite',Parser'Literal' [[T,[e,[s,[t,Nothing]]]],[" ",[T,[y,[p,[e,[_,Nothing]]]]]]]:
+    
+Test_Parse'DataType' = Parser'DataType',Parser'Number' [123,"List'Point'String''_"]:
     
 SourceText is String
 [A]Parser is [A], SourceText    
@@ -356,7 +358,7 @@ EXIT>
 <script>
     window.onload = function()
     {
-        document.getElementById("code").value += List_CPS + String_CPS + Bool_CPS;
+        document.getElementById("code").value += List_Library + String_CPS + Bool_CPS;
     }
     
     function clickedRun()

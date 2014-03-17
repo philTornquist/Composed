@@ -282,8 +282,8 @@ function Run_Tests()
             "   } > Number"
             );
     test(0,"Summation,List'Number'",
-            [make_list([1,2,3,4,5,6,7,8,9,10], 'L')],
-            55,
+            [make_list(listTo(10001), 'L')],
+            (10000*10001)/2,
             EXISTS+
             SUM,
             List_CPS+

@@ -1,10 +1,16 @@
 var log_compiler_conversions = NLOG;
 
-Array.prototype.toString = function() {
+Array.prototype.toString = function(count) {
+    if (count === undefined) count = 0;
+    count++;
+    if (count > 200) return "...";
     ret = "";
     for (var i = 0; i < this.length; i++) {
         if (i !== 0) ret += ",";
-        ret += this[i];
+        if (this[i] instanceof Array)
+            ret += this[i].toString(count);
+        else
+            ret += this[i];
     }
     return "[" + ret + "]";
 }
@@ -154,7 +160,8 @@ function parseElement(code) {
                             pseudocode);    
                     }
                     else {
-                        pseudocode = "Data Structure>1\n";
+                        var hint = "Hint>TailRecursive\n";
+                        pseudocode = hint + "Data Structure>1\n";
                         
                         add("Conversion",
                             output,
@@ -167,6 +174,15 @@ function parseElement(code) {
                 //  The conversion is a Combination
                 default:
                     if (code.get() == ':') throw "Combination definition cannot contain a conversion";
+                    var hint = "Hint>TailRecursive\n";
+                    for (var type in types)
+                    {
+                        if (type == output)
+                        {
+                            hint = "";
+                            break;
+                        }
+                    }
                     add("Conversion",
                         output,
                         types,
@@ -180,7 +196,7 @@ function parseElement(code) {
                     types[i], 
                     [output], 
                     [],
-                    "Element>" + i + "\nParam>0\nExtract>" + i + "\n");
+                    "Hint>TailRecursive\n" + "Element>" + i + "\nParam>0\nExtract>" + i + "\n");
 
                 if (types.length == 1) continue;
                 
