@@ -74,7 +74,7 @@ Test3 = STD,List'Number' [[[[Nothing,4],3],2],1]:
 Test4 = String,Number 12345:
 Test5 = Number,String "12345":
 Test6 = Factorial,Number 10:
-
+Test7 = InOrderWalk'Number',Tree'Number' [Nothing, 3, Nothing]:
 
 X is Number
 Y is Number
@@ -372,6 +372,7 @@ EXIT>
     </div>
     
     <script src="Library/List.cps.js"></script>
+    <script src="Library/Tree.cps.js"></script>
     <script src="Library/Bool.cps.js"></script>
     <script src="Library/String.cps.js"></script>
 
@@ -402,7 +403,7 @@ EXIT>
         log_loaded_generics         = NLOG;
         log_loaded_selectors        = NLOG;
     
-        document.getElementById("input_composed").value += List_Library + String_CPS;
+        document.getElementById("input_composed").value += List_Library + String_CPS + Tree_Library;
         
         LOG(["RUNNING SANITY CHECKS"]);
         LOG("The following output is the result of running some weird Composed code that");

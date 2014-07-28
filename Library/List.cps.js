@@ -1,6 +1,15 @@
 var List_CPS = "\
 [A]List is [A], [A]List                                                \n"
 
+var AppendedList_CPS = "\
+[T]AppendedList is [T]List      \n\
+[T]AppendedList from [T]List(f), [T]List(r):    \n\
+    f > [T]Exists'List' {       \n\
+        yes: [f > [T], [f > [T]List, r] > [T]AppendedList > [T]List] > [T]List       \n\
+        no: r      \n\
+    } > [T]List > [T]AppendedList     \n\
+"
+
 var Foldr_CPS = "\
 [A]Foldr is [A]                                                        \n\
 [A]Foldr from [B]List(l), [A](b):                                      \n\
@@ -89,4 +98,4 @@ Count from [A](x), Count(c):                                           \n\
    [1, c > Number] > Sum > Number > Count                              \n"
 
     
-var List_Library = List_CPS + Foldr_CPS + Foldl_CPS + Map_CPS + Filter_CPS + Count_CPS;
+var List_Library = List_CPS + AppendedList_CPS + Foldr_CPS + Foldl_CPS + Map_CPS + Filter_CPS + Count_CPS;
