@@ -74,7 +74,6 @@ Test3 = STD,List'Number' [[[[Nothing,4],3],2],1]:
 Test4 = String,Number 12345:
 Test5 = Number,String "12345":
 Test6 = Factorial,Number 10:
-Test7 = InOrderWalk'Number',Tree'Number' [Nothing, 3, Nothing]:
 
 X is Number
 Y is Number
@@ -455,7 +454,8 @@ EXIT>
         var opt_pseudo = Data.PassCompiled[Data.Pseudo_Pass.length-1];
         for (var conv in opt_pseudo)
         {
-            pseudocode += opt_pseudo[conv].join('\n') + "\n\n";
+			if (typeof opt_pseudo[conv] == 'Array')
+				pseudocode += opt_pseudo[conv].join('\n') + "\n\n";
         }
         var js = Data.PassCompiled[Data.Pseudo_Pass.length+Data.JS_Pass.length-1]
         for (var conv in js)
