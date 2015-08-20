@@ -61,19 +61,20 @@
                 </td>
                 <td>
                 <h4>Output Window</h4>
-                <textarea id="output" rows=30 cols=100>
-</textarea>
+				<div id="LOG_DIV" style="max-width:80%; max-height: 500;overflow:auto;"></div>
+                <!--<textarea id="output" rows=30 cols=100>
+</textarea>-->
             </tr>
         </table>
     <div>
 
         <textarea id="input_composed" rows=50 cols=100>
-Test1 = Point2D,X,Y 1,2:
-Test2 = Summation,List'Number' [[[Nothing,3],2],1]:
-Test3 = STD,List'Number' [[[[Nothing,4],3],2],1]:
-Test4 = String,Number 12345:
-Test5 = Number,String "12345":
-Test6 = Factorial,Number 10:
+Test1 = Point2D,X,Y 1,2;
+Test2 = Summation,List'Number' [[[Nothing,3],2],1];
+Test3 = STD,List'Number' [[[[Nothing,4],3],2],1];
+Test4 = String,Number 12345;
+Test5 = Number,String "12345";
+Test6 = Factorial,Number 10;
 
 X is Number
 Y is Number
@@ -382,6 +383,8 @@ EXIT>
     <script src="Compiler.js"></script>
     <script src="Optimize.js"></script>
 
+    <script src="Interpreter.js"></script>
+
     <script src="Linker.js"></script>
     <script src="JSCompiler.js"></script>
 
@@ -390,6 +393,7 @@ EXIT>
 <script>
     window.onload = function()
     {
+        log_js_execution            = NLOG;
         log_compiler_conversions    = NLOG;
 
         log_linking                 = NLOG;
@@ -401,14 +405,15 @@ EXIT>
         log_loaded_conversions      = NLOG;
         log_loaded_generics         = NLOG;
         log_loaded_selectors        = NLOG;
+
+		document.getElementById("input_pseudo").value = BUILT_IN;
     
         document.getElementById("input_composed").value += List_Library + String_CPS + Tree_Library;
         
-        LOG(["RUNNING SANITY CHECKS"]);
+        LOG("RUNNING SANITY CHECKS");
         LOG("The following output is the result of running some weird Composed code that");
         LOG("verifies the compiler, optimizer, and runtime are working correctly\n\n");
         LOG("Press the 'Run' button to see the sample code run");
-        LOG([]);
         Run_Tests();
     }
     
@@ -426,8 +431,7 @@ EXIT>
         log_loaded_generics      = document.getElementById("log_loaded_generics").checked ? LOG : NLOG;
         log_loaded_selectors     = document.getElementById("log_loaded_selectors").checked ? LOG : NLOG;
 
-        var code = 
-        document.getElementById("output").value = "";
+        //var code = document.getElementById("output").value = "";
         Data = new DataStore();
         Data.JITName = js_conversion_rename;
         
@@ -451,7 +455,7 @@ EXIT>
         var pseudocode = "";
         var jscode = "";
         
-        var opt_pseudo = Data.PassCompiled[Data.Pseudo_Pass.length-1];
+        var opt_pseudo = Data.Conversions;
         for (var conv in opt_pseudo)
         {
 			if (typeof opt_pseudo[conv] == 'Array')

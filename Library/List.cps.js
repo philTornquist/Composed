@@ -97,5 +97,16 @@ Count from [A]List(l):                                                 \n\
 Count from [A](x), Count(c):                                           \n\
    [1, c > Number] > Sum > Number > Count                              \n"
 
+var Last_CPS = "\
+[A]Last is [A]                                                         \n\
+[A]Last from [A]List(l):                                               \n\
+   [l] > [A]Exists'Last' {                                             \n\
+      yes: l > [A]List > [A]Exists'Last' {                             \n\
+	     yes: l > [A]List > [A]Last                                    \n\
+		 no: l > [A] > [A]Last                                         \n\
+	  } > [A]Last                                                      \n\
+	  no: Nothing > [A]Last                                            \n\
+   } > [A]Last                                                         \n"
+
     
-var List_Library = List_CPS + AppendedList_CPS + Foldr_CPS + Foldl_CPS + Map_CPS + Filter_CPS + Count_CPS;
+var List_Library = List_CPS + AppendedList_CPS + Foldr_CPS + Foldl_CPS + Map_CPS + Filter_CPS + Count_CPS + Last_CPS;

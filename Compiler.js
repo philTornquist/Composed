@@ -313,6 +313,7 @@ function parseElement(code) {
             var subconv_MAP_type = {};
             var subConversions = parseSubConversions(code, varname_MAP_number, varname_MAP_type, genericVar_MAP_name, subconv_MAP_number, subconv_MAP_type);
 
+
             add("Conversion",
                 output, 
                 inputs, 
@@ -334,7 +335,7 @@ function parseElement(code) {
             } while (code.get() == ',' && (code.next() || true));
             code.clearWhite();
             var data = "";
-            while (code.get() != ':') { data += code.get(); code.next(); }
+            while (code.get() != ';') { data += code.get(); code.next(); }
             code.next();
             compiledcode += "Inline>" + output + "=" + call.join(',') + "<" + data + "\n";
             inlines++;
@@ -364,7 +365,7 @@ function SubConversion(subNumber, type) {
     this.subNumber = subNumber;
     this.type = type;
     this.pseudocode = function() {
-        return "Sub>" + this.subNumber + "\n";
+        return "Sub>" + this.subNumber + "," + this.type + "\n";
     };
 }
 
@@ -509,10 +510,11 @@ function parseSubConversions(code, varname_MAP_number, varname_MAP_type, generic
     } catch(e) { code.restore(); return ""; }
     if (subconv_MAP_number[subname] !== undefined) { throw code.lineNumber + "Multiple subconversions definitions for " + subname + ". " + code.hereBack(); }
     
-    subconv_MAP_number[subname] = subconv_MAP_number["_COUNT"]++;
     code.clearWhite();
     
-    if (code.get() !== ':') { code.restore(); delete subconv_MAP_number[subname]; return ""; }
+    if (code.get() !== ':') { code.restore(); return ""; }
+    subconv_MAP_number[subname] = subconv_MAP_number["_COUNT"]++;
+
     code.next();
     code.clearWhite();
     
@@ -789,7 +791,12 @@ function parseQuotedType(code) {
 }
 
 function parseType(code) {
-    return parseLiteral(code) + parseQuotedType(code);
+    if (code.get() == '-') {
+        code.next();
+        return '-' + parseLiteral(code) + parseQuotedType(code);
+    }
+    else
+        return parseLiteral(code) + parseQuotedType(code);
 }
 
 function parseGeneric(code) {

@@ -99,7 +99,7 @@ function JS_insert_param_names(Data, conversion, bytecode, i)
                 nc.push(PSins(bytecode[i]) + ">" + args[parseInt(PSdata(bytecode[i]))]);
                 break;
             case "Sub":
-                nc.push(PSins(bytecode[i]) + ">" + Data.SubConversions[conversion][parseInt(PSdata(bytecode[i]))]);
+                nc.push(PSins(bytecode[i]) + ">" + Data.SubConversions[conversion][parseInt(PSdata(bytecode[i]))].name);
                 break;
             default:
                 nc.push(bytecode[i]);
@@ -182,6 +182,15 @@ function JS_compile(Data, conversion, bytecode, i)
             case "SubConversion":
                 jsString += "var " + data + " = ";
                 break;
+            case "Switch":
+                var args = arguments.split(",");
+
+                var new_conv = output_of(conversion) + ',' + inputs_of(conversion).slice(1).join(',');
+
+                jsString += "this['" + js_conversion_rename(new_conv) + ":' + js_conversion_rename(" + args[0] + ")](";
+                jsString += args.slice(1).join(', ');
+                jsString += ")";
+                break;
             case "Enter":
                 jsString += "this." + js_conversion_rename(data) + "(";
                 break;    
@@ -189,12 +198,13 @@ function JS_compile(Data, conversion, bytecode, i)
                 jsString += ")";
                 break;
             case "Element":
-                jsString += "function(r){return (r instanceof String && r==\"Nothing\")?\"Nothing\":";
-                jsString += "r["+PSdata(bytecode[i])+"];";
-                jsString += "}(";
+                //jsString += "function(r){return (r instanceof String && r==\"Nothing\")?\"Nothing\":";
+                //jsString += "r["+PSdata(bytecode[i])+"];";
+                //jsString += "}(";
                 break;
             case "Extract":
-                jsString += ")";
+                //jsString += ")";
+				jsString += "[" + PSdata(bytecode[i]) + "]";
                 break;
             case "Ask":
                 jsString += "($" + data + " ? $" + data + ".apply(this):\"Nothing\") ";
@@ -288,5 +298,5 @@ function JS_compile(Data, conversion, bytecode, i)
 
     if (jsEnd != "") console.log(conversion, jsString + jsEnd);
              
-    return new Function(arguments, jsString + jsEnd);
+    return new Function(arguments, "/*" + conversion + "*/\n" + jsString + jsEnd);
 }

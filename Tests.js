@@ -14,7 +14,7 @@ function listTo(val) {var r=[];for(var i=0;i<val;i++)r.push(i);return r;}
 function std(l){var m=0;for(var i=0;i<l.length;i++)m+=l[i];m/=i;var n=[];for(i=0;i<l.length;i++)n.push((l[i]-m)*(l[i]-m));var s=0;for(i=0;i<n.length;i++)s+=n[i];return Math.sqrt(s/(l.length-1));}
 function test(test, conv, params, result, pseudocode, cps)
 {
-//    if (!test) { Tests[conv] = false; return; }
+    if (!test) { Tests[conv] = false; return; }
     var res = {};
     res.conversion = conv;
     res.params = params;
@@ -58,8 +58,9 @@ function Run_Tests()
         link_conversions(Data);
 
 
-        var funct = CALL(Data, test.conversion);
-        var tested = funct.apply(Data.JITed, test.params);
+		var tested = Interpret(Data, test.conversion, test.params, {});
+        //var funct = CALL(Data, test.conversion);
+        //var tested = funct.apply(Data.JITed, test.params);
         tested = tested ? tested : "Nothing";
         if (test.result.toString() === tested.toString()) LOG("Test Passed! " + test.result + " = " + test.conversion + test.params);
         else { failed++;

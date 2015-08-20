@@ -112,17 +112,21 @@ function load_pseudocode(Data, pseudocode)
     for (var i = 0; i < pseudocode.length; i++)
     {
         var ins = pseudocode[i].split(">")[0];
-        var data = pseudocode[i].split(">")[1];
+        var data = pseudocode[i].split(">");
+		data.shift();
+		data = data.join('>');
         switch(ins)
         {
             case "Specification":
             case "Conversion":
-                if (name !== "")
+                if (name !== ""){
                     load_conversion(Data, name, code);
+				}
                 name = data;
                 code = [pseudocode[i]];
                 break;
             case "Inline":
+				console.log(data);
                 Data.ToRun.push(data);
                 break;
             default:
@@ -153,7 +157,7 @@ function load_conversion(Data, conversion, pseudocode)
                 break;
 
         //  If  the conversion is to build a data structure
-        //    Then add is to the list of data structure types
+        //    Then add it to the list of data structure types
 		if (pseudocode[ii].split(">")[0] == "Data Structure")
         {
 			Data.Types[generic_type(output_of(conversion))] = conversion;
@@ -176,7 +180,7 @@ function load_conversion(Data, conversion, pseudocode)
 //  Links all loaded conversions
 function link_conversions(Data)
 {
-    LOG("LINKING...");
+    LOG(["LINKING..."]);
     var generic_compiled_count = 0;
     //  False when nothing happened in one iteration of the while loop
 	var notDone = true;
@@ -187,17 +191,24 @@ function link_conversions(Data)
         //  For all conversion calls
      	for (var conversion in Data.Missing)
     	{
+			
             if (!is_generic(conversion))
             {
-                var funct = accepts_selector(Data, conversion);
-                if (funct)
+                var inputs = inputs_of(conversion);
+                var output = output_of(conversion);
+                if (is_selector(inputs[0]))
                 {
-                    Data.Conversions[conversion] = funct;
+                    Data.Hints[conversion] = { TailRecursive:false }; 
+                    Data.Conversions[conversion] = [
+                        "Conversion>" + conversion,
+                        "Switch>0"
+                    ];
                     delete Data.Missing[conversion];
                     notDone = true;
                     continue;
                 }
             }
+			
 
             //  Otherwise try to match a generic conversion
     		var relocation = 0;
@@ -222,10 +233,10 @@ function link_conversions(Data)
                 //  Replace generic types in generic pseudocode to build a real conversion
     			else
                 {
-                    var funct = accepts_selector(Data, conversion);
-                    if (funct)
-                        Data.Conversions[conversion] = funct;
-                    else
+                    //var funct = accepts_selector(Data, conversion);
+                    //if (funct)
+					//	Data.Conversions[conversion] = funct;
+                    //else
                     {
                         var pseudocode = build_conversion(Data, conversion, relocation, Data.Generics[generic], 0);
                         Data.Conversions[conversion] = add_conversion(Data, conversion, pseudocode);
@@ -239,6 +250,7 @@ function link_conversions(Data)
                 missing = true;
     	}
 	}
+	LOG([]);
     LOG("LINKED! " + generic_compiled_count + " Conversions compiled from generics");
     
     if (missing)
@@ -268,9 +280,6 @@ function create_conversion(Data, conversion)
 }
 
 function accepts_selector(Data, conversion) {
-
-    if (conversion == "Point2D,Number,Number,Type")
-        var h = 10;
     var inputs = inputs_of(conversion);
 	var output = output_of(conversion);
     if (is_selector(inputs[0]))
@@ -295,6 +304,7 @@ function accepts_selector(Data, conversion) {
             }
             
             newCall += ":" + selects.join(",");
+			/*
             var funct = Data.JITed[Data.JITName(newCall)];
             if (!funct) 
             {
@@ -302,6 +312,8 @@ function accepts_selector(Data, conversion) {
                 funct = Data.JITed[Data.JITName(newCall)];
             }
             return funct.apply(this, args);
+			*/
+			return Interpret(Data, newCall, args, {});
         }
     }
 	return undefined;
@@ -324,10 +336,15 @@ function generic_match(conversion, generic)
     for (var i = 0; i < selGen.length; i++)
         if (selGen[i] !== selConv[i]) return;
 
-    //  Get the inputs of both conversions
+    //  Get the inputs and selectors of both conversions
 	var inpGen = inputs_of(generic);
+	var selGen = selectors_of(generic);
 	var inpConv = inputs_of(conversion);
+	var selConv = selectors_of(conversion);
 	if (inpGen.length !== inpConv.length) return;
+	if (selGen.length !== selConv.length) return;
+
+	//  Check that all selectors in 
 
 	//  Lists of remaining inputs that need to be checked
 	//    Done this way to provide relocation information about inputs
@@ -339,14 +356,15 @@ function generic_match(conversion, generic)
         paramMap[i] = i;
 	}
 
+
 	//  Match up all non-generic inputs to [generic]
 	for (var i = toCheckGen.length - 1; i >= 0; i--) {
 		if (!is_generic(inpGen[toCheckGen[i]])) {
 			for (var j = toCheckConv.length - 1; i >= 0; i--) {
 				if (inpGen[toCheckGen[i]] === inpConv[toCheckConv[j]]) {
+					paramMap[toCheckGen[i]] = toCheckConv[j];
 					toCheckGen.splice(i, 1);
 					toCheckConv.splice(j, 1);
-					paramMap[toCheckGen[i]] = toCheckConv[j];
 					break;
 				}
 			}
@@ -484,7 +502,7 @@ function build_conversion(Data, conversion, relocation, pseudocode, i)
     }
 
 	pseudocode = compile_generic(Data, conversion, relocation, pseudocode, i);	
-	pseudocode = order_inputs(conversion, pseudocode, i);
+	pseudocode = order_inputs(Data, conversion, pseudocode, i);
     
     log_linker_restructure([]);
     log_linker_restructure(["CONVERSION: " + conversion]);
@@ -496,7 +514,7 @@ function build_conversion(Data, conversion, relocation, pseudocode, i)
 	return pseudocode;
 }
 
-function order_inputs(conversion, pseudocode, i) {
+function order_inputs(Data, conversion, pseudocode, i) {
 	var nc = [];
 
 	var compare = function(a,b) {
@@ -510,11 +528,18 @@ function order_inputs(conversion, pseudocode, i) {
                         return "Number";
                     case "Character":
                         return "Charachter";
+					case "Sub":
+						return PSdata(pseudocode[0]).split(",")[1];
+					case "Selector":
+						return selector_type(PSdata(pseudocode[0]));
 					default:
 						throw "ORder not implemented " + PSins(pseudocode[0]);
 				}
 			}
 		}
+	if (conversion === "MatchString'ClearedWhite',Parser'ClearedWhite',String") {
+		var tesat = 1;
+	}
 		return type(a) < type(b);	
 	}
 
@@ -536,10 +561,10 @@ function order_inputs(conversion, pseudocode, i) {
                 var inputs = [];
                 var answers = [];
                 var code = forall_inputs(pseudocode, i, function(bc, i) { 
-                    inputs.addInOrder(order_inputs(conversion, bc, i), compare); 
+                    inputs.addInOrder(order_inputs(Data, conversion, bc, i), compare); 
                 },
                 function(bc, i, answer) { 
-                    var nc = order_inputs(conversion, bc, i);
+                    var nc = order_inputs(Data, conversion, bc, i);
                     nc.unshift("Answer>"+answer); 
                     answers.push(nc); 
                     return [];
@@ -563,7 +588,7 @@ function order_inputs(conversion, pseudocode, i) {
                 break;
             case "SubConversion":
                 var code = value_at(pseudocode, i+1);
-                code = order_inputs(conversion, code, 0);
+                code = order_inputs(Data, conversion, code, 0);
                 nc.push(pseudocode[i]);
                 for (var j = 0; j < code.length; j++) nc.push(code[j]);
                 i += code.length;
@@ -630,6 +655,15 @@ function compile_generic(Data, conversion, relocation, pseudocode, i) {
                     nc.push(pseudocode[i]);
                 }
 				break;
+			case "Sub":
+				if (PSdata(pseudocode[i]).indexOf('[') !== -1) { 
+					var data = PSdata(pseudocode[i]).split(',');
+					nc.push("Sub>" + data[0] + ',' + replace_generic(data[1], relocation));
+				}
+				else {
+					nc.push(pseudocode[i]);
+				}
+				break;
 			default:
 				nc.push(pseudocode[i]);
 				break;
@@ -685,7 +719,10 @@ function add_conversion(Data, conversion, pseudocode)
             case "SubConversion":
                 nc.push(pseudocode[i]);
                 if (!Data.SubConversions[conversion]) Data.SubConversions[conversion] = [];
-                Data.SubConversions[conversion].push(data);
+				var subconv = {};
+				subconv.name = data;
+				subconv.type = output_of(PSdata(pseudocode[i+1]));
+                Data.SubConversions[conversion].push(subconv);
                 break;
             case "Data Structure":
                 Data.Types[output_of(conversion)] = conversion;
@@ -741,7 +778,7 @@ function CALL(Data, call)
 
 function run_inline()
 {
-    LOG(["Running Inline Conversions"]);
+    LOG("Running Inline Conversions");
     function dataifyParamString(str)
     {
         function expand_string(str)
@@ -782,7 +819,8 @@ function run_inline()
                     if (needs_more_work) result.push(dataifyParamString(substring.substring(0, substring.length-1)));
                     else result.push((substring[0] == '"' && substring[substring.length-1] == '"') ?
                                      expand_string(substring.substring(1, substring.length-1)) :
-                                     isFinite(substring) ? parseInt(substring) : substring);
+                                     (substring.length === 0 ? "Nothing" :
+                                        isFinite(substring) ? parseInt(substring) : substring));
                     needs_more_work = false;
                     last_substring = i+1;
                     break;
@@ -800,6 +838,7 @@ function run_inline()
         var call = split[1];
         var assign = split[0];
 
+		//var test = Interpret(Data, call, params, {});
         var funct = CALL(Data, call);
         var test = funct.apply(Data.JITed, params);
         test = test !== undefined ? test : "Nothing";
@@ -809,17 +848,43 @@ function run_inline()
         
         if (output_of(call) == "String") 
         {
-            function compact_string(composedStr) {
-                if (composedStr == "Nothing") return "";
-                return composedStr[0] + compact_string(composedStr[1]);
-            }
             logStr += "\"" + compact_string(test) + "\" ";
         }
         
+		console.log(call + " < " + params, test);
         
         logStr += test + " = " + call + " < " + params;
-        
+
         LOG(logStr);
+		LOG("Result: ");
+		LOG([output_of(call)]);
+		PrettyLogData(test);
+		LOG([]);
     }
-    LOG([]);
+}
+
+function compact_string(composedStr) {
+	if (composedStr == "Nothing") return "";
+	return composedStr[0] + compact_string(composedStr[1]);
+}
+
+function PrettyLogData(data, tab) {
+	if (tab === undefined) tab = "";
+	tab += "  ";
+
+	if (data instanceof Array) {
+		for (var key in data) {
+			if (key == "addInOrder") continue;
+			if (!isFinite(parseInt(key))) {
+				LOG([key]);
+				if (key == "List'Character'")
+					PrettyLogData(compact_string(data[key]), tab);
+				else
+					PrettyLogData(data[key], tab);
+				LOG([]);
+			}
+		}
+	}
+	else
+		LOG(data.toString());
 }

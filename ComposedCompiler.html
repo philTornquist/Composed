@@ -30,17 +30,34 @@
                   </table>
                 </td>
                 <td>
-                 <textarea id="output" rows=30 cols=100>
-</textarea>
+				<div id="LOG_DIV" style="max-height: 500;overflow:auto;"></div>
+                <!-- <textarea id="output" rows=30 cols=100>
+</textarea>-->
             </tr>
         </table>
     <div>
 
         <textarea id="code" rows=50 cols=100>
-Test_Parser'Literal' = Parser'Literal',Parser'Number' [123,"Test Type_"]:
-Test_ParseClearWhite' = Parser'ClearedWhite',Parser'Literal' [[T,[e,[s,[t,Nothing]]]],[" ",[T,[y,[p,[e,[_,Nothing]]]]]]]:
-    
-Test_Parse'DataType' = Parser'DataType',Parser'Number' [123,"List'Point'String''_"]:
+Test_Parse'ConversionDefinition' = CodeString,Parser'Number' [123,"Test from hello(x): [Test-Selector, a] > Number > String_"];
+/Test_StringJoin = StringJoin,List'AString',String ["Test",["1",["2",["3",]]]],", ";
+/Test_MatchString = MatchString'Number',Parser'Number',String [122,"f_"],"f";
+/Test_Parse'InputReferences' = Parser'InputReferences',Parser'Number' [123,"hello(x), testing(y)_"];
+Test_Parse'ConversionDefinition' = Parser'ConversionDefinition',Parser'Number' [123,"Test from hello(x): [test-selctor, a] > Number_"];
+/Test_Parse'DataStruture' = Parser'DataStructure',Parser'Number' [123,"Test is Point, Variable_"];
+
+/Test_Parse'ClearWhite' = Parser'ClearedWhite',Parser'Literal' ["Test"," Type_"];
+/Test_Parser'Literal' = Parser'Literal',Parser'Number' [123,"Test Type_"];
+/Test_Parse'DataType' = Parser'DataType',Parser'Number' [123,"List'Point'String''_"];
+/Test_Parse'Conversions' = Parser'Conversions',Parser'Number' [123," > Point > Test_"];
+/Test_Parser'Arguments' = Parser'Arguments',Parser'Number' [123," [ test1 , test2 , test3 ]_"];
+/Test_Parser'Conversion' = Parser'Conversion',Parser'Number' [123," [test1, test2, test3] > Product > Number_"];
+/Test_Parser'Answers' = Parser'Answers',Parser'Number' [123," { test: fifteen t2:twenty}_"];
+/Test_Parser'Conversion'2 = Parser'Conversion',Parser'Number' [123," [test1 > Number, test2, [test3, test4 > Happy] > Value] > Product > Number_"];
+/Test_Parser'Conversion'3 = Parser'Conversion',Parser'Number' [123," [test1 > Number {hi: there}, test2] > Product{good: bye} > Number { hello: 2}_"];
+
+AString is String
+String from String(s):
+    s
     
 SourceText is String
 [A]Parser is [A], SourceText    
@@ -61,6 +78,7 @@ Character from [A]Parser(p):
     ] > [A]Parser
 
 
+/ ---------------------------Parse Literal
         
 Literal is String
 Parser'Literal' from [A]Parser(p):
@@ -93,6 +111,8 @@ Parser'ClearedWhite' from [A]Parser(p):
                 12345 > ClearedWhite
             ] > Parser'ClearedWhite'
     } > Parser'ClearedWhite'
+
+/ ---------------------------Parse Datatype
 
 DataType is GenericType, SubType
 SubType is Literal, SubType
@@ -127,20 +147,25 @@ Parser'SubType' from [A]Parser(p):
             ] > Parser'SubType'
     } > Parser'SubType'
 
-Parser'GenericType' from [A]Parser(p):
-    p > Parser'ClearedWhite' > IsOpenSquareBrace > Bit > Test'Parser'GenericType'
 
 
 
 IsLiteralTerminator is Bit
 IsLiteralTerminator from [A]Parser(p):
-    [
-        [
-            p > IsWhiteSpace > Bit,
-            ["_", p > Character] > CompareBit > Bit
-        ] > BitOr > Bit,
-        p > IsQuote > Bit
-    ] > BitOr > Bit > IsLiteralTerminator
+	test1: p > IsWhiteSpace > Bit
+	test2: [test1, ["_", p > Character] > CompareBit > Bit] > BitOr > Bit
+	test3: [test2, p > IsQuote > Bit] > BitOr > Bit
+	test4: [test3, [",", p > Character] > CompareBit > Bit] > BitOr > Bit
+	test5: [test4, p > IsOpenSquareBrace > Bit] > BitOr > Bit
+	test6: [test5, p > IsClosedSquareBrace > Bit] > BitOr > Bit
+	test7: [test6, p > IsOpenCurlyBrace > Bit] > BitOr > Bit
+	test8: [test7, p > IsClosedCurlyBrace > Bit] > BitOr > Bit
+	test9: [test8, p > IsColon > Bit] > BitOr > Bit
+	test10: [test9, p > IsClosedParen > Bit] > BitOr > Bit
+	test11: [test10, p > IsOpenParen > Bit] > BitOr > Bit
+	test12: [test11, p > IsDash > Bit] > BitOr > Bit
+
+    [test12] > IsLiteralTerminator
 
 IsWhiteSpace is Bit
 IsWhiteSpace from [A]Parser(p):
@@ -149,16 +174,702 @@ IsWhiteSpace from [A]Parser(p):
 IsQuote is Bit
 IsQuote from [A]Parser(p):
     ["'", p > Character] > CompareBit > Bit > IsQuote
+	
+IsDash is Bit
+IsDash from [A]Parser(p):
+    ["-", p > Character] > CompareBit > Bit > IsDash
+
+IsColon is Bit
+IsColon from [A]Parser(p):
+    [":", p > Character] > CompareBit > Bit > IsQuote
+
+IsComma is Bit
+IsComma from [A]Parser(p):
+    [",", p > Character] > CompareBit > Bit > IsQuote
+
+IsOpenSquareBrace is Bit
+IsOpenSquareBrace from [A]Parser(p):
+    ["[", p > Character] > CompareBit > Bit > IsOpenSquareBrace
+
+IsClosedSquareBrace is Bit
+IsClosedSquareBrace from [A]Parser(p):
+    ["]", p > Character] > CompareBit > Bit > IsOpenSquareBrace
+
+IsOpenCurlyBrace is Bit
+IsOpenCurlyBrace from [A]Parser(p):
+    ["{", p > Character] > CompareBit > Bit > IsOpenCurlyBrace
+
+IsClosedCurlyBrace is Bit
+IsClosedCurlyBrace from [A]Parser(p):
+    ["}", p > Character] > CompareBit > Bit > IsOpenCurlyBrace
+
+IsOpenParen is Bit
+IsOpenParen from [A]Parser(p):
+    ["(", p > Character] > CompareBit > Bit > IsOpenParen
+
+IsClosedParen is Bit
+IsClosedParen from [A]Parser(p):
+    [")", p > Character] > CompareBit > Bit > IsOpenParen
+
+IsArgumentsTerminator is Bit
+IsArgumentsTerminator from [A]Parser(p):
+	p > IsClosedSquareBrace > Bit > ISArgumentsTerminator
+
+IsConversionOperator is Bit
+IsConversionOperator from [A]Parser(p):
+	[">", p > Character] > CompareBit > Bit > IsConversionOperator
 
 CompareBit is Bit
 CompareBit from Character(c1), Character(c2):
     [c1, c2] > Compare'Bit' {equal:1 less:0 greater:0} > Bit > CompareBit
 
-IsOpenSquareBrace is Bit
-IsOpenSquareBrace from [A]Parser(p):
-    ["[", p > Character] > CompareBit > Bit > IsOpenSquareBrace
+
+
+/ ---------------------------Parse Conversion
+
+ConversionType is DataType, Answers
+Conversions is List'ConversionType'
+Arguments is List'Argument'
+Argument is Selector, Literal, Conversion, -ArgType
+Conversion is Conversions, Arguments
+MultipleArguments is Arguments
+
+Selector is SelectorType, SelectorValue
+SelectorType is String
+SelectorValue is String
+
+Parser'Conversion' from [A]Parser(p):
+	cw: p > Parser'ClearedWhite'
+	args: cw > Parser'Arguments'
+	convs: args > Parser'Conversions'
+
+	[
+		convs,
+		[
+			args > Arguments,
+			convs > Conversions
+		] > Conversion
+	] > Parser'Conversion'
+
+Parser'Arguments' from [A]Parser(p):
+	cw: p > Parser'ClearedWhite'
+
+	[cw] > IsOpenSquareBrace > Bit > Test'Parser'Arguments'' {
+		false:
+			[
+				cw > Parser'Argument',
+				[
+					cw > Parser'Argument' > Argument,
+					Nothing > List'Argument'
+				] > List'Argument' > Arguments
+			] > Parser'Arguments'
+		true:
+			[
+				cw > NextParser'ClearedWhite' > Parser'ClearedWhite' > Parser'Conversion' > Parser'MultipleArguments' > Parser'ClearedWhite' > NextParser'ClearedWhite' > Parser'ClearedWhite',
+				[
+					cw > NextParser'ClearedWhite' > Parser'ClearedWhite' > Parser'Conversion' > Conversion > Conversions > List'ConversionType' > Exists'Argument' {
+        				yes:
+        					[
+        						cw > NextParser'ClearedWhite' > Parser'ClearedWhite' > Parser'Conversion' > Conversion,
+        						Nothing > Literal,
+        						Nothing > Selector,
+        						Conversion-ArgType
+        					] > Argument
+        				no:
+        					cw > NextParser'ClearedWhite' > Parser'ClearedWhite' > Parser'Conversion' > Conversion > Arguments > List'Argument' > Argument
+					} > Argument,
+					cw > NextParser'ClearedWhite' > Parser'ClearedWhite' > Parser'Conversion' > Parser'MultipleArguments' > MultipleArguments > Arguments > List'Argument'
+				] > List'Argument' > Arguments
+			] > Parser'Arguments'
+	}
+
+Parser'Argument' from [A]Parser(p):
+	lit: p > Parser'ClearedWhite' > Parser'Literal'
+
+
+	[lit] > IsDash > Bit > Test'Parser'Argument'' {
+
+		true:
+			[
+				[12, lit > NextParser'Literal' > Parser'Literal'] > Parser'Number' > Parser'Literal',
+				[
+					Nothing > Literal,
+					Nothing > Conversion,
+					[
+						lit > Literal > String > SelectorValue,
+						[12, lit > NextParser'Literal' > Parser'Literal'] > Parser'Number' > Parser'Literal' > Literal > String > SelectorType
+					] > Selector,
+					Selector-ArgType
+				] > Argument
+			] > Parser'Argument'
+			
+		false:
+			[
+				lit,
+				[
+					lit > Literal,
+					Nothing > Conversion,
+					Nothing > Selector,
+					Literal-ArgType
+				] > Argument
+			] > Parser'Argument'
+	}
+
+Parser'MultipleArguments' from [A]Parser(p):
+	cw: p > Parser'ClearedWhite'
+
+	[cw] > IsComma > Bit > Test'Parser'MultipleArguments'' {
+		false:
+			[
+				Nothing > MultipleArguments,
+				p
+			] > Parser'MultipleArguments'
+		true:
+			[
+				cw > NextParser'ClearedWhite' > Parser'ClearedWhite' > Parser'Conversion' > Parser'MultipleArguments',
+				[
+				    cw > NextParser'ClearedWhite' > Parser'ClearedWhite' > Parser'Conversion' > Conversion > Conversions > List'ConversionType' > Exists'Argument' {
+        				yes:
+        					[
+        						cw > NextParser'ClearedWhite' > Parser'ClearedWhite' > Parser'Conversion' > Conversion,
+        						Nothing > Literal,
+        						Nothing > Selector,
+        						Conversion-ArgType
+        					] > Argument
+        				no:
+        					cw > NextParser'ClearedWhite' > Parser'ClearedWhite' > Parser'Conversion' > Conversion > Arguments > List'Argument' > Argument
+					} > Argument,
+					cw > NextParser'ClearedWhite' > Parser'ClearedWhite' > Parser'Conversion' > Parser'MultipleArguments' > MultipleArguments > Arguments > List'Argument'
+				] > List'Argument' > Arguments > MultipleArguments
+			] > Parser'MultipleArguments'
+	} > Parser'MultipleArguments'
+	
+
+Parser'Conversions' from [A]Parser(p):
+	cw: p > Parser'ClearedWhite'
+
+	[cw] > IsConversionOperator > Bit > Test'Parser'Conversions'' {
+		false:
+			[
+				Nothing > Conversions,
+				p
+			] > Parser'Conversions'
+
+		true:
+			[
+				cw > NextParser'ClearedWhite' > Parser'ClearedWhite' > Parser'ClearedWhite' > Parser'ConversionType' > Parser'Conversions',
+				[
+					cw > NextParser'ClearedWhite' > Parser'ClearedWhite' > Parser'ClearedWhite' > Parser'ConversionType' > ConversionType,
+					cw > NextParser'ClearedWhite' > Parser'ClearedWhite' > Parser'ClearedWhite' > Parser'ConversionType' > Parser'Conversions' > Conversions > List'ConversionType'
+				] > List'ConversionType' > Conversions
+			] > Parser'Conversions'
+	} > Parser'Conversions'
+
+Parser'ConversionType' from [A]Parser(p):
+	[
+		p > Parser'DataType' > Parser'Answers',
+		[
+			p > Parser'DataType' > DataType,
+			p > Parser'DataType' > Parser'Answers' > Answers
+		] > ConversionType
+	] > Parser'ConversionType'
+
+Answers is List'Answer'
+Answer is AnswerName, Conversion
+AnswerName is Literal
+
+Parser'Answers' from [A]Parser(p):
+	cw: p > Parser'ClearedWhite'
+
+	[cw] > IsOpenCurlyBrace > Bit > Test'Parser'Answers'' {
+		false:
+			[
+				p,
+				Nothing > Answers
+			] > Parser'Answers'
+
+		true:
+			[
+				cw > NextParser'ClearedWhite' > Parser'ClearedWhite' > Parser'Answer' > Parser'Answers',
+				[
+					cw > NextParser'ClearedWhite' > Parser'ClearedWhite' > Parser'Answer' > Answer,
+					cw > NextParser'ClearedWhite' > Parser'ClearedWhite' > Parser'Answer' > Parser'Answers' > Answers > List'Answer'
+				] > List'Answer' > Answers
+			] > Parser'Answers'
+	}
+
+Parser'Answers' from Parser'Answer'(p):
+	cw: p > Parser'ClearedWhite'
+
+	[cw] > IsClosedCurlyBrace > Bit > Test'Parser'Answers'' {
+		true:
+			[
+				cw > NextParser'ClearedWhite' > Parser'ClearedWhite',
+				Nothing > Answers
+			] > Parser'Answers'
+
+		false:
+			[
+				cw > Parser'Answer' > Parser'Answers',
+				[
+					cw > Parser'Answer' > Answer,
+					cw > Parser'Answer' > Parser'Answers' > Answers > List'Answer'
+				] > List'Answer' > Answers
+			] > Parser'Answers'
+	}
+
+Parser'Answer' from [A]Parser(p):
+	cw: p > Parser'ClearedWhite'
+
+	[
+		[cw] > Parser'Literal' > NextParser'Literal' > Parser'Literal' > Parser'Conversion',
+		[
+			cw > Parser'Literal' > Literal > AnswerName,
+			cw > Parser'Literal' > NextParser'Literal' > Parser'Literal' > Parser'Conversion' > Conversion
+		] > Answer
+	] > Parser'Answer'
+
+
+OutputType is DataType
+InputTypes is List'DataType'
+DataStructure is OutputType, InputTypes
+
+Parser'DataStructure' from [A]Parser(p):
+	cw: p > Parser'ClearedWhite'
+	output : cw > Parser'DataType'
+	cw2: output > Parser'ClearedWhite'
+	i: cw2 > NextParser'ClearedWhite' > Parser'ClearedWhite'
+	is: i > NextParser'ClearedWhite' > Parser'ClearedWhite'
+
+	["i", cw2 > Character] > Compare'Parser'DataStructure'' {
+		less: [p, Nothing > DataStructure] > Parser'DataStructure'
+		greater: [p, Nothing > DataStructure] > Parser'DataStructure'
+
+		equal:
+			["s", i > Character] > Compare'Parser'DataStructure'' {
+				less: [i, Nothing > DataStructure] > Parser'DataStructure'
+				greater: [i, Nothing > DataStructure] > Parser'DataStructure'
+				equal:
+					is > Parser'DataType' > Parser'InputTypes' > Exists'Parser'DataStructure'' {
+						no: [p, Nothing > DataStructure] > Parser'DataStructure'
+						yes:
+							[
+								is > Parser'DataType' > Parser'InputTypes',
+								[
+									[
+										cw2 > Parser'DataType' > DataType,
+										cw2 > Parser'DataType' > Parser'InputTypes' > InputTypes > List'DataType'
+									] > List'DataType' > InputTypes,
+									output > DataType > OutputType
+								] > DataStructure
+							] > Parser'DataStructure'
+					} > Parser'DataStructure'
+			} > Parser'DataStructure'
+
+	} > Parser'DataStructure'
+
+Parser'InputTypes' from [A]Parser(p):
+	cw: p > Parser'ClearedWhite'
+	comma: p > Parser'ClearedWhite' > NextParser'ClearedWhite' > Parser'ClearedWhite'
+
+	[cw] > IsComma > Bit > Test'Parser'InputTypes'' {
+		false: [p, Nothing > InputTypes] > Parser'InputTypes'
+
+		true:
+			[
+				comma > Parser'ClearedWhite' > Parser'DataType',
+				[
+					comma > Parser'ClearedWhite' > Parser'DataType' > DataType,
+					comma > Parser'ClearedWhite' > Parser'DataType' > Parser'InputTypes' > InputTypes > List'DataType'
+				] > List'DataType' > InputTypes
+			] > Parser'InputTypes'
+	} > Parser'InputTypes'
+
+Parser'OutputType' from [A]Parser(p):
+	stuff: p > Parser'ClearedWhite' > Parser'DataType'
+	[
+		stuff,
+		stuff > DataType > OutputType
+	] > Parser'OutputType'
+
+ConversionDefinition is OutputType, InputReferences, Conversion
+InputReference is DataType, RefName
+RefName is String
+InputReferences is List'InputReference'
+
+Parser'ConversionDefinition' from [A]Parser(p):
+	cw: p > Parser'ClearedWhite'
+	output: cw > Parser'OutputType'
+	match: [output > Parser'ClearedWhite', ["f",["r",["o",["m",Nothing>String]>PrependedString>String]>PrependedString>String]>PrependedString>String]>PrependedString>String] > MatchString'ClearedWhite' > Parser'ClearedWhite'
+	inputs: match > Parser'ClearedWhite' > Parser'InputReferences'
+	match2: [inputs > Parser'ClearedWhite', [":",Nothing>String]>AppendedString>String] > MatchString'ClearedWhite' > Parser'ClearedWhite'
+	conv: match2 > Parser'Conversion'
+
+	[match] > Exists'Parser'ConversionDefinition'' {
+		no: [p, Nothing > ConversionDefinition] > Parser'ConversionDefinition'
+		yes:
+			[match2] > Exists'Parser'ConversionDefinition'' {
+				yes:
+					[
+						[
+							output > OutputType,
+							inputs > InputReferences,
+							conv > Conversion
+						] > ConversionDefinition,
+						conv
+					] > Parser'ConversionDefinition'
+				no: [p, Nothing > ConversionDefinition] > Parser'ConversionDefinition'
+			} > Parser'ConversionDefinition'
+	} > Parser'ConversionDefinition'					
+
+[A]MatchString is [A]Parser
+[A]MatchString from String(t), [A]Parser(p):
+	nextp: p > [A]NextParser > [A]Parser
+	nexts: t > List'Character' > List'Character' > String
+	[t] > [A]Exists'MatchString' {
+		yes:
+			[t > Character, p > Character] > [A]Compare'MatchString' {
+				less: Nothing > [A]Parser > [A]MatchString
+				equal: [nextp, nexts] > [A]MatchString
+				greater: Nothing > [A]Parser > [A]MatchString
+			} > [A]MatchString
+		no:
+			p > [A]MatchString
+	} > [A]MatchString
+
+
+Parser'InputReferences' from [A]Parser(p):
+	cw: p > Parser'ClearedWhite'
+	input: cw > Parser'InputReference'
+	inputs: input > Parser'InputReferences'
+
+	[
+		[
+			input > InputReference,
+			inputs > InputReferences > List'InputReference'
+		] > List'InputReference' > InputReferences,
+		inputs
+	] > Parser'InputReferences'
+
+Parser'InputReferences' from Parser'InputReference'(p):
+	cw: p > Parser'ClearedWhite'
+	comma: p > Parser'ClearedWhite' > NextParser'ClearedWhite' > Parser'ClearedWhite'
+
+	[cw] > IsComma > Bit > Test'Parser'InputReferences'' {
+		false: [p, Nothing > InputReferences] > Parser'InputReferences'
+
+		true:
+			[
+				comma > Parser'ClearedWhite' > Parser'InputReference',
+				[
+					comma > Parser'ClearedWhite' > Parser'InputReference' > InputReference,
+					comma > Parser'ClearedWhite' > Parser'InputReference' > Parser'InputReferences' > InputReferences > List'InputReference'
+				] > List'InputReference' > InputReferences
+			] > Parser'InputReferences'
+	} > Parser'InputReferences'
+
+Parser'InputReference' from [A]Parser(p):
+	cw: p > Parser'ClearedWhite'
+	type: p > Parser'DataType'
+	ref: type > Parser'RefName'
+
+	[
+		[
+			[type] > DataType,
+			ref > RefName
+		] > InputReference,
+		ref
+	] > Parser'InputReference'
+
+Parser'RefName' from [A]Parser(p):
+	cw: p > Parser'ClearedWhite'
+	name: cw > NextParser'ClearedWhite' > Parser'ClearedWhite' > Parser'Literal'
+
+	[
+		[name] > Literal > String > RefName,
+		name > NextParser'Literal' > Parser'Literal'
+	] > Parser'RefName'
+
+/ ---------------------------Semantic Analysis
+
+
+CodeString is String
+CodeString from [A]Parser(p):
+	p > Parser'ConversionDefinition' > ConversionDefinition > CodeString
+
+/ ---------------------------Code Gen
+
+CodeString from ConversionDefinition(cd):
+
+    header: ["f",["u",["n",["c",["t",["i",["o",["n",[" ", Nothing>List'Character']>List'Character']>List'Character']>List'Character']>List'Character']>List'Character']>List'Character']>List'Character']>List'Character']>List'Character'>String
+    
+    funName: [
+				[
+				    cd > OutputType > DataType,
+				    cd > InputReferences > List'InputReference' > Map'DataType' > List'DataType'
+				] > List'DataType',
+				["$", Nothing>List'Character'] > List'Character' > String
+			] > StringJoin > String
+			
+	arguments:  [
+				    cd > InputReferences > List'InputReference' > Map'RefName' > List'RefName' > Map'String' > List'String',
+				    [",",[" ", Nothing>List'Character']>List'Character']>List'Character'>String
+			    ] > StringJoin > String
+    [
+    	[
+    		[
+    			[
+    				[
+    					[
+    						header,
+    						funName
+    					] > AppendedString > String,
+    					" "
+    				] > AppendedString > String,
+    				[
+    				    [
+        				    [
+        				        "(",
+            				    arguments
+            				] > PrependedString > String,
+            				[")",[" ",["{",["\n",Nothing>List'Character']>List'Character']>List'Character']>List'Character']>List'Character'>String
+            			] > AppendedString > String
+    				] > AppendedString > String
+    			] > AppendedString > String,
+    			"\n"
+    		] > AppendedString > String,
+    		cd > Conversion > String
+    	] > AppendedString > String,
+    	"}"
+	] > AppendedString > String > CodeString
+
+StringJoin is String
+StringJoin from [A]List(l), String(s):
+    l > Exists'String' {
+        no:
+            Nothing > List'Character' > String
+        yes:
+            [
+                l > [A] > String > StringJoin > StringJoinAppend,
+                [
+                    l > [A]List,
+                    s
+                ] > [A]Map'StringJoinElement' > [A]List'StringJoinElement'
+            ] > Foldl'StringJoinAppend' > StringJoinAppend
+    } > String > StringJoin
+StringJoinAppend is StringJoin
+[T]StringJoinElement is String, [T]
+StringJoinAppend from StringJoinAppend(s), [A]StringJoinElement(e):
+    [
+        s > StringJoin > String, 
+        [
+            e > String,
+            e > [A] > String
+        ] > AppendedString > String
+    ] > AppendedString > String > StringJoin > StringJoinAppend
+
+String from InputReference(ir):
+	[
+		[
+			[
+				[
+					ir > DataType > String,
+					"("
+				] > AppendedString > String,
+				ir > RefName > String
+			] > AppendedString > String
+		] > AppendedString > String,
+		")"
+	] > AppendedString > String
+
+String from DataType(it):
+	k:["I",["T",Nothing>List'Character']>List'Character']>List'Character'>String
+
+	it > SubType > Literal > String
+
+String from Conversion(c):
+	res: [
+		c > Conversions > List'ConversionType',
+		[
+			Nothing > String > PreString,
+			Nothing > String > PostString,
+			Nothing > LastType
+		] > ConvertConversions
+	] > Foldr'ConvertConversions' > ConvertConversions
+
+	lastconvsig: [
+		[
+			res > LastType > DataType > String,
+			"$"
+		] > AppendedString > String,
+		c > Arguments > CommaJoin > String
+	] > AppendedString > String
+
+	lastenter: [
+		[
+			[
+				lastconvsig,
+				["(",["\n",Nothing>List'Character']>List'Character']>List'Character'>String
+			] > AppendedString > String
+		] > AppendedString > String,
+		"\n"
+	] > AppendedString > String
+
+	lastexit: ["\n",[")",Nothing>List'Character']>List'Character']>List'Character'>String
+
+	lastcall: [
+		[
+		    lastenter,
+		    [
+		        c > Arguments > List'Argument',
+		        [",",["\n",Nothing>List'Character']>List'Character']>List'Character'>String
+		    ] > StringJoin > String
+		] > AppendedString > String,
+		lastexit
+	] > AppendedString > String
+
+	[
+		[
+			res > PreString > String,
+			lastcall
+		] > AppendedString > String,
+		res > PostString > String
+	] > AppendedString > String
+
+CommaJoin from Arguments(a):
+	[
+		Nothing > CommaJoin,
+		a > List'Argument'
+	] > Foldl'CommaJoin' > CommaJoin > String
+
+CommaJoin is String
+CommaJoin from CommaJoin(cj), Argument(a):
+	[
+		cj > Exists'String' {
+			no: Nothing > String
+			yes:
+				[
+					cj > String,
+					"$"
+				] > AppendedString > String
+		} > String,
+		a > DataType > String
+	] > AppendedString > String > CommaJoin
+
+DataType from Argument(a):
+	[a, a > -ArgType] > DataType
+
+DataType from Argument(a), Conversion-ArgType:
+
+	[a] > Conversion > Conversions > Exists'DataType' {
+		yes: a > Conversion > Conversions > List'ConversionType' > Last'ConversionType' > ConversionType > DataType
+		no: a > Conversion > Arguments > List'Argument' > Argument > DataType
+	} > DataType 
+
+DataType from Argument(a), Literal-ArgType:
+	[ 
+		Nothing > GenericType, 
+		[
+			Nothing > SubType, 
+			["L", Nothing > List'Character']>List'Character' > String > Literal
+		] > SubType
+	] > DataType
+
+DataType from Argument(a), Selector-ArgType:
+	[ Nothing > GenericType, [Nothing > SubType, ["$", a > Selector > SelectorType > String] > PrependedString > String > Literal] > SubType] > DataType
+
+ConvertConversions is LastType, PreString, PostString
+LastType is DataType
+PreString is String
+PostString is String
+
+ConvertConversions from ConvertConversions(cc), ConversionType(ct):
+
+
+	[cc > LastType] > Exists'ConvertConversions' {
+	yes:
+		[
+			[
+				[
+					[
+						[
+							cc > PreString>String,
+							cc > LastType > DataType > String
+						] > AppendedString > String,
+						"$"
+					] > AppendedString > String,
+					ct > DataType > String
+				] > AppendedString > String,
+				["(",["\n",Nothing>List'Character']>List'Character']>List'Character'>String
+			] > AppendedString > String > PreString,
+
+			ct > DataType > LastType,
+
+
+			[
+				
+				["\n",[")",Nothing>List'Character']>List'Character']>List'Character'>String,
+				cc > PostString > String
+			] > AppendedString > String > PostString
+		] > ConvertConversions
+	no:
+		[
+			cc > PreString,
+			cc > PostString,
+			ct > DataType > LastType
+		] > ConvertConversions
+	} > ConvertConversions
+
+String from Argument(a), String(s):
+    [
+        [
+            s,a > String
+        ] > AppendedString > String,
+        "\n"
+    ] > AppendedString > String
+
+String from Argument(a):
+	[a, a > -ArgType] > String
+
+String from Argument(a), Conversion-ArgType:
+	a > Conversion > String
+
+String from Argument(a), Literal-ArgType:
+    a > Literal > String
+	
+String from Argument(a), Selector-ArgType:
+    value: [
+                [
+                    "'",
+                    a > Selector > SelectorValue > String
+                ] > PrependedString > String,
+                "'"
+            ] > AppendedString > String
+            
+    type: [
+                [
+                    "'",
+                    a > Selector > SelectorType > String
+                ] > PrependedString > String,
+                "'"
+            ] > AppendedString > String
+    
+    [
+    	[
+        	["S",["E",["L",["E",["C",["T",["(",Nothing>List'Character']>List'Character']>List'Character']>List'Character']>List'Character']>List'Character']>List'Character']>List'Character'>String,
+            [
+                [
+                    value,
+                    ","
+                ] > AppendedString > String,
+                type
+            ] > AppendedString > String
+        ] > AppendedString > String,
+        ")"
+    ] > AppendedString > String
+
 </textarea>
-<textarea id="inputBytecode" rows=50 cols=100>
+<textarea id="input_pseudo" rows=50 cols=100>
 Conversion>Number,Sum
 Element>0
 Param>0
@@ -352,12 +1063,16 @@ EXIT>
     <script src="Compiler.js"></script>
     <script src="Optimize.js"></script>
 
+    <script src="Interpreter.js"></script>
+
     <script src="Linker.js"></script>
     <script src="JSCompiler.js"></script>
 
 <script>
     window.onload = function()
     {
+		document.getElementById("input_pseudo").value = BUILT_IN;
+
         document.getElementById("code").value += List_Library + String_CPS + Bool_CPS;
     }
     
@@ -369,21 +1084,29 @@ EXIT>
         log_js_compilation = log_jitting;
     
         var code = document.getElementById("code").value;
-        document.getElementById("output").value = "";
+        //document.getElementById("output").value = "";
         
         Data = new DataStore();
         Data.JITName = js_conversion_rename;
         
         var conversions = compile(code);
-        load_pseudocode(Data, conversions);
-        load_pseudocode(Data, document.getElementById("inputBytecode").value);
-        
-        
         document.getElementById("bytecode").value = conversions;
+
+        load_pseudocode(Data, conversions);
+        load_pseudocode(Data, document.getElementById("input_pseudo").value);
+        
+        
         document.getElementById("jsCode").value = "";
         
         link_conversions(Data);
         
+        var jscode = "";
+        var js = Data.PassCompiled[Data.Pseudo_Pass.length+Data.JS_Pass.length-1]
+        for (var conv in js)
+        {
+            jscode += js[conv].toString().replace("anonymous",Data.JITName(conv)) + "\n\n";
+		}
+		document.getElementById("jsCode").value = jscode;
         
         var missingMsg = "";
         for (var key in Data.Missing)
